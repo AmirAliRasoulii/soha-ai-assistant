@@ -11,3 +11,9 @@ venv/
 # Local OS artifacts
 .DS_Store
 Thumbs.db
+
+# Coverage artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
