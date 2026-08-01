@@ -1,0 +1,162 @@
+{
+  "$defs": {
+    "AuthorizationResourceRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to the resource an authorization decision applies to.",
+      "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
+        "resource_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Resource Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resource_type",
+        "resource_id"
+      ],
+      "title": "AuthorizationResourceRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:authorization-decision:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Deterministic result of applying a versioned policy to an action and resource.",
+  "properties": {
+    "action": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Action",
+      "type": "string"
+    },
+    "constraint_references": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Constraint References",
+      "type": "array"
+    },
+    "decision_id": {
+      "format": "uuid",
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "effect": {
+      "enum": [
+        "allow",
+        "deny"
+      ],
+      "title": "Effect",
+      "type": "string"
+    },
+    "evaluated_at": {
+      "format": "date-time",
+      "title": "Evaluated At",
+      "type": "string"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expires At"
+    },
+    "obligations": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Obligations",
+      "type": "array"
+    },
+    "policy_version": {
+      "maxLength": 32,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "reason_codes": {
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "resource": {
+      "$ref": "#/$defs/AuthorizationResourceRef"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "security_context_id": {
+      "format": "uuid",
+      "title": "Security Context Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "decision_id",
+    "request_id",
+    "security_context_id",
+    "action",
+    "resource",
+    "effect",
+    "reason_codes",
+    "policy_version",
+    "evaluated_at"
+  ],
+  "title": "AuthorizationDecision",
+  "type": "object"
+}

@@ -1,0 +1,140 @@
+{
+  "$id": "urn:ai-assistant:contracts:security-principal-context:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Trusted identity facts established by the Identity Adapter.",
+  "properties": {
+    "allowed_scopes": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 128,
+      "title": "Allowed Scopes",
+      "type": "array"
+    },
+    "assurance_level": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Assurance Level",
+      "type": "string"
+    },
+    "authenticated_at": {
+      "format": "date-time",
+      "title": "Authenticated At",
+      "type": "string"
+    },
+    "authentication_methods": {
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Authentication Methods",
+      "type": "array"
+    },
+    "context_id": {
+      "format": "uuid",
+      "title": "Context Id",
+      "type": "string"
+    },
+    "data_classification_allowances": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 32,
+      "title": "Data Classification Allowances",
+      "type": "array"
+    },
+    "deployment_id": {
+      "format": "uuid",
+      "title": "Deployment Id",
+      "type": "string"
+    },
+    "groups": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 256,
+      "title": "Groups",
+      "type": "array"
+    },
+    "issuer": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Issuer",
+      "type": "string"
+    },
+    "principal_id": {
+      "format": "uuid",
+      "title": "Principal Id",
+      "type": "string"
+    },
+    "principal_type": {
+      "enum": [
+        "user",
+        "service"
+      ],
+      "title": "Principal Type",
+      "type": "string"
+    },
+    "roles": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Roles",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Session Id"
+    }
+  },
+  "required": [
+    "context_id",
+    "principal_id",
+    "principal_type",
+    "deployment_id",
+    "issuer",
+    "authenticated_at",
+    "authentication_methods",
+    "assurance_level"
+  ],
+  "title": "SecurityPrincipalContext",
+  "type": "object"
+}
