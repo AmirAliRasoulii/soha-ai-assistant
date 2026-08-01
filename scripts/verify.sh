@@ -37,11 +37,24 @@ case "${RESOLVED_PYTHON}" in
 		;;
 esac
 
+echo "[verify] checking formatting"
+uv run --locked ruff format --check .
+
+echo "[verify] checking lint"
+uv run --locked ruff check .
+
+echo "[verify] checking types"
+uv run --locked mypy src
+
 echo "[verify] checking Python syntax"
 uv run --locked python -m compileall -q src tests
 
-echo "[verify] running unit tests"
-uv run --locked python -m unittest discover -s tests -v
+echo "[verify] running tests with coverage"
+uv run --locked pytest \
+	--cov=ai_assistant \
+	--cov-branch \
+	--cov-report=term-missing \
+	--cov-fail-under=95
 
 echo "[verify] checking installed package import"
 uv run --locked python -c "import ai_assistant"

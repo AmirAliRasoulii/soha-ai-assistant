@@ -54,6 +54,16 @@ uv sync --locked
 - The project is installed as a package, so `import ai_assistant` must work
   without setting `PYTHONPATH`.
 
+## Quality checks
+
+```
+./scripts/verify.sh
+```
+
+The script runs Ruff formatting, Ruff linting, mypy strict type checking,
+pytest, and branch coverage with a minimum threshold. Tool settings live in
+`pyproject.toml`.
+
 ## Process
 
 - Git is the source of truth for all code and technical decisions.

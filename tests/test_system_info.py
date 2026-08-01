@@ -40,9 +40,7 @@ class SystemInfoTestCase(unittest.TestCase):
 
     def test_structure(self) -> None:
         self.assertIsInstance(self.info, dict)
-        self.assertEqual(
-            set(self.info), {"app_name", "app_version", "python_version"}
-        )
+        self.assertEqual(set(self.info), {"app_name", "app_version", "python_version"})
         for key, value in self.info.items():
             self.assertIsInstance(key, str)
             self.assertIsInstance(value, str)
