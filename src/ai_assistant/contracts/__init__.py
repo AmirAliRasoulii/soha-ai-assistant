@@ -59,6 +59,14 @@ from ai_assistant.contracts.security import (
     AuthorizationResourceRef,
     SecurityPrincipalContext,
 )
+from ai_assistant.contracts.step_result import (
+    StepEvidenceRef,
+    StepProvenance,
+    StepResult,
+    StepRetryMetadata,
+    StepStatus,
+    StepTypedOutputRef,
+)
 from ai_assistant.contracts.turn_input import AttachmentRef, TurnInput
 
 __all__ = [
@@ -103,6 +111,12 @@ __all__ = [
     "RuntimeSnapshotIntegrity",
     "SchemaVersion",
     "SecurityPrincipalContext",
+    "StepEvidenceRef",
+    "StepProvenance",
+    "StepResult",
+    "StepRetryMetadata",
+    "StepStatus",
+    "StepTypedOutputRef",
     "SuccessCondition",
     "TimeExpressionType",
     "TurnInput",

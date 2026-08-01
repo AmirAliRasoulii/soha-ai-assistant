@@ -1,0 +1,329 @@
+{
+  "$defs": {
+    "StepEvidenceRef": {
+      "additionalProperties": false,
+      "description": "Reference to evidence supporting one or more typed outputs.",
+      "properties": {
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "supports_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supports Fact Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "supports_fact_ids"
+      ],
+      "title": "StepEvidenceRef",
+      "type": "object"
+    },
+    "StepProvenance": {
+      "additionalProperties": false,
+      "description": "Provider-neutral description of what produced the step result.",
+      "properties": {
+        "capability": {
+          "enum": [
+            "document_retrieval",
+            "semantic_analytics",
+            "personal_selector",
+            "rule_evaluator",
+            "official_search"
+          ],
+          "title": "Capability",
+          "type": "string"
+        },
+        "implementation_version": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "title": "Implementation Version",
+          "type": "string"
+        },
+        "input_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Input Digest",
+          "type": "string"
+        },
+        "operation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Operation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability",
+        "operation",
+        "implementation_version",
+        "input_digest"
+      ],
+      "title": "StepProvenance",
+      "type": "object"
+    },
+    "StepRetryMetadata": {
+      "additionalProperties": false,
+      "description": "Bounded retry eligibility record for one step attempt.",
+      "properties": {
+        "attempt": {
+          "maximum": 2,
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "max_attempts": {
+          "maximum": 2,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "previous_result_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Result Id"
+        },
+        "retryable": {
+          "title": "Retryable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "attempt",
+        "max_attempts",
+        "retryable"
+      ],
+      "title": "StepRetryMetadata",
+      "type": "object"
+    },
+    "StepTypedOutputRef": {
+      "additionalProperties": false,
+      "description": "Immutable reference to one validated typed output of a step attempt.",
+      "properties": {
+        "data_scope": {
+          "enum": [
+            "general",
+            "personal"
+          ],
+          "title": "Data Scope",
+          "type": "string"
+        },
+        "fact_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "schema_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Schema Ref",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "value_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Value Ref",
+          "type": "string"
+        },
+        "value_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Value Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id",
+        "value_type",
+        "data_scope",
+        "schema_ref",
+        "value_ref",
+        "sha256"
+      ],
+      "title": "StepTypedOutputRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:step-result:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Immutable validated result envelope for one planned step attempt.",
+  "properties": {
+    "completed_at": {
+      "format": "date-time",
+      "title": "Completed At",
+      "type": "string"
+    },
+    "correlation_id": {
+      "format": "uuid",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "evidence_refs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/StepEvidenceRef"
+      },
+      "maxItems": 32,
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "failure_code": {
+      "anyOf": [
+        {
+          "enum": [
+            "INVALID_INPUT",
+            "UNAUTHENTICATED",
+            "UNAUTHORIZED",
+            "AMBIGUOUS_REQUEST",
+            "POLICY_REJECTED",
+            "NO_EVIDENCE",
+            "CONFLICTING_EVIDENCE",
+            "SCHEMA_INVALID",
+            "DEPENDENCY_TIMEOUT",
+            "TRANSIENT_DEPENDENCY",
+            "BUDGET_EXCEEDED",
+            "RATE_LIMITED",
+            "CAPACITY_REJECTED",
+            "INTERNAL_ERROR"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Code"
+    },
+    "internal_detail_ref": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Internal Detail Ref"
+    },
+    "latency_ms": {
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Latency Ms",
+      "type": "integer"
+    },
+    "missing_fact_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Missing Fact Ids",
+      "type": "array"
+    },
+    "plan_id": {
+      "format": "uuid",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/StepProvenance"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "result_id": {
+      "format": "uuid",
+      "title": "Result Id",
+      "type": "string"
+    },
+    "retry": {
+      "$ref": "#/$defs/StepRetryMetadata"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "success",
+        "partial",
+        "failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "step_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Step Id",
+      "type": "string"
+    },
+    "typed_outputs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/StepTypedOutputRef"
+      },
+      "maxItems": 16,
+      "title": "Typed Outputs",
+      "type": "array"
+    }
+  },
+  "required": [
+    "result_id",
+    "request_id",
+    "plan_id",
+    "step_id",
+    "runtime_snapshot_id",
+    "correlation_id",
+    "completed_at",
+    "status",
+    "latency_ms",
+    "retry",
+    "provenance"
+  ],
+  "title": "StepResult",
+  "type": "object"
+}
