@@ -27,14 +27,52 @@ OCCURRED_AT = "2026-01-01T12:00:00" + TEHRAN
 EXPECTED_UTC_HOUR = 8
 
 FORBIDDEN_FIELDS: tuple[str, ...] = (
-    "message", "raw_message", "normalized_query", "prompt", "system_prompt",
-    "completion", "response", "answer", "citation_text", "exception", "stack_trace",
-    "traceback", "raw_error", "provider_response", "provider_request", "model_input",
-    "model_output", "token", "access_token", "api_key", "secret", "password",
-    "credentials", "email", "display_name", "roles", "groups", "session", "cookie",
-    "headers", "http_status", "sql", "query", "url", "endpoint", "filesystem_path",
-    "trace_id", "span_id", "cloud_event", "specversion", "source", "datacontenttype",
-    "dataschema", "data", "metadata", "attributes",
+    "message",
+    "raw_message",
+    "normalized_query",
+    "prompt",
+    "system_prompt",
+    "completion",
+    "response",
+    "answer",
+    "citation_text",
+    "exception",
+    "stack_trace",
+    "traceback",
+    "raw_error",
+    "provider_response",
+    "provider_request",
+    "model_input",
+    "model_output",
+    "token",
+    "access_token",
+    "api_key",
+    "secret",
+    "password",
+    "credentials",
+    "email",
+    "display_name",
+    "roles",
+    "groups",
+    "session",
+    "cookie",
+    "headers",
+    "http_status",
+    "sql",
+    "query",
+    "url",
+    "endpoint",
+    "filesystem_path",
+    "trace_id",
+    "span_id",
+    "cloud_event",
+    "specversion",
+    "source",
+    "datacontenttype",
+    "dataschema",
+    "data",
+    "metadata",
+    "attributes",
 )
 # Names that are also legitimate JSON Schema keywords are checked only as
 # declared model properties, never by scanning raw schema text.
@@ -126,7 +164,10 @@ class ValidEventTests(unittest.TestCase):
 class IdentifierTests(unittest.TestCase):
     def test_uuid4_enforced_for_every_identifier_field(self) -> None:
         fields = (
-            "event_id", "correlation_id", "request_id", "runtime_snapshot_id",
+            "event_id",
+            "correlation_id",
+            "request_id",
+            "runtime_snapshot_id",
         )
         for field in fields:
             with self.subTest(field=field):
@@ -250,8 +291,13 @@ class ResourceTests(unittest.TestCase):
 class CanonicalCodeTests(unittest.TestCase):
     def test_valid_canonical_codes_are_accepted(self) -> None:
         for value in (
-            "runtime", "runtime.completed", "runtime.authorization.denied",
-            "capability:document-retrieval", "policy.denied", "confidential", "standard",
+            "runtime",
+            "runtime.completed",
+            "runtime.authorization.denied",
+            "capability:document-retrieval",
+            "policy.denied",
+            "confidential",
+            "standard",
         ):
             with self.subTest(value=value):
                 payload = event_payload()
@@ -440,7 +486,12 @@ class SchemaTests(unittest.TestCase):
     def test_no_cloudevents_transport_property_declared(self) -> None:
         declared = self.schema_property_names()
         for name in (
-            "specversion", "cloud_event", "datacontenttype", "dataschema", "source", "data",
+            "specversion",
+            "cloud_event",
+            "datacontenttype",
+            "dataschema",
+            "source",
+            "data",
         ):
             with self.subTest(name=name):
                 self.assertNotIn(name, declared)
@@ -448,7 +499,14 @@ class SchemaTests(unittest.TestCase):
     def test_no_sensitive_or_transport_fields_declared(self) -> None:
         declared = self.schema_property_names()
         for name in (
-            "prompt", "response", "exception", "token", "email", "sql", "url", "filesystem_path",
+            "prompt",
+            "response",
+            "exception",
+            "token",
+            "email",
+            "sql",
+            "url",
+            "filesystem_path",
         ):
             with self.subTest(name=name):
                 self.assertNotIn(name, declared)
