@@ -1,0 +1,302 @@
+{
+  "$defs": {
+    "QueryEntity": {
+      "additionalProperties": false,
+      "description": "Structured entity mention with explicit trusted-resolver state.",
+      "properties": {
+        "candidate_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Candidate Ids",
+          "type": "array"
+        },
+        "canonical_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Id"
+        },
+        "entity_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Entity Type",
+          "type": "string"
+        },
+        "mention": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Mention",
+          "type": "string"
+        },
+        "resolution_status": {
+          "enum": [
+            "resolved",
+            "unresolved",
+            "ambiguous"
+          ],
+          "title": "Resolution Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity_type",
+        "mention",
+        "resolution_status"
+      ],
+      "title": "QueryEntity",
+      "type": "object"
+    },
+    "QueryTimeExpression": {
+      "additionalProperties": false,
+      "description": "Structured time expression with explicit trusted-resolver state.",
+      "properties": {
+        "candidate_values": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Candidate Values",
+          "type": "array"
+        },
+        "canonical_value": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Value"
+        },
+        "expression": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string"
+        },
+        "resolution_status": {
+          "enum": [
+            "resolved",
+            "unresolved",
+            "ambiguous"
+          ],
+          "title": "Resolution Status",
+          "type": "string"
+        },
+        "time_type": {
+          "enum": [
+            "date",
+            "date_range",
+            "relative",
+            "academic_term",
+            "unknown"
+          ],
+          "title": "Time Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "expression",
+        "time_type",
+        "resolution_status"
+      ],
+      "title": "QueryTimeExpression",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:query-analysis:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Immutable structured query features assembled by trusted analyzer code.",
+  "properties": {
+    "ambiguity_codes": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Ambiguity Codes",
+      "type": "array"
+    },
+    "ambiguity_level": {
+      "enum": [
+        "none",
+        "non_blocking",
+        "blocking"
+      ],
+      "title": "Ambiguity Level",
+      "type": "string"
+    },
+    "analysis_id": {
+      "format": "uuid",
+      "title": "Analysis Id",
+      "type": "string"
+    },
+    "analyzed_at": {
+      "format": "date-time",
+      "title": "Analyzed At",
+      "type": "string"
+    },
+    "analyzer_version": {
+      "maxLength": 32,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Analyzer Version",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "entities": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/QueryEntity"
+      },
+      "maxItems": 32,
+      "title": "Entities",
+      "type": "array"
+    },
+    "evidence_needs": {
+      "items": {
+        "enum": [
+          "none",
+          "document",
+          "analytics",
+          "personal",
+          "rule",
+          "official_source"
+        ],
+        "type": "string"
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "title": "Evidence Needs",
+      "type": "array"
+    },
+    "intent": {
+      "enum": [
+        "greeting",
+        "capability_help",
+        "factual",
+        "procedural",
+        "status",
+        "eligibility",
+        "comparison",
+        "analytics",
+        "unknown"
+      ],
+      "title": "Intent",
+      "type": "string"
+    },
+    "is_multi_part": {
+      "title": "Is Multi Part",
+      "type": "boolean"
+    },
+    "is_personal": {
+      "title": "Is Personal",
+      "type": "boolean"
+    },
+    "message_id": {
+      "format": "uuid",
+      "title": "Message Id",
+      "type": "string"
+    },
+    "normalized_query": {
+      "maxLength": 32000,
+      "minLength": 1,
+      "title": "Normalized Query",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "risk_level": {
+      "enum": [
+        "normal",
+        "elevated",
+        "high",
+        "unknown"
+      ],
+      "title": "Risk Level",
+      "type": "string"
+    },
+    "risk_signals": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Risk Signals",
+      "type": "array"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "time_expressions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/QueryTimeExpression"
+      },
+      "maxItems": 16,
+      "title": "Time Expressions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "analysis_id",
+    "request_id",
+    "message_id",
+    "runtime_snapshot_id",
+    "analyzed_at",
+    "normalized_query",
+    "intent",
+    "ambiguity_level",
+    "is_personal",
+    "is_multi_part",
+    "risk_level",
+    "evidence_needs",
+    "confidence",
+    "analyzer_version"
+  ],
+  "title": "QueryAnalysis",
+  "type": "object"
+}

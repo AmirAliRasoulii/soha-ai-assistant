@@ -16,6 +16,17 @@ from ai_assistant.contracts.errors import (
     ErrorCode,
     ErrorEnvelope,
 )
+from ai_assistant.contracts.query_analysis import (
+    AmbiguityLevel,
+    EntityResolutionStatus,
+    EvidenceNeed,
+    QueryAnalysis,
+    QueryEntity,
+    QueryIntent,
+    QueryTimeExpression,
+    RiskLevel,
+    TimeExpressionType,
+)
 from ai_assistant.contracts.runtime_snapshot import (
     RuntimeArtifactRef,
     RuntimeFeatureFlag,
@@ -32,6 +43,7 @@ from ai_assistant.contracts.turn_input import AttachmentRef, TurnInput
 
 __all__ = [
     "SCHEMA_VERSION_PATTERN",
+    "AmbiguityLevel",
     "AttachmentRef",
     "AuditActorRef",
     "AuditEvent",
@@ -40,8 +52,15 @@ __all__ = [
     "AuthorizationResourceRef",
     "ContractModel",
     "DomainError",
+    "EntityResolutionStatus",
     "ErrorCode",
     "ErrorEnvelope",
+    "EvidenceNeed",
+    "QueryAnalysis",
+    "QueryEntity",
+    "QueryIntent",
+    "QueryTimeExpression",
+    "RiskLevel",
     "RuntimeArtifactRef",
     "RuntimeFeatureFlag",
     "RuntimeSnapshot",
@@ -49,6 +68,7 @@ __all__ = [
     "RuntimeSnapshotIntegrity",
     "SchemaVersion",
     "SecurityPrincipalContext",
+    "TimeExpressionType",
     "TurnInput",
     "UtcDateTime",
 ]
