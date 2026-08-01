@@ -1,0 +1,100 @@
+{
+  "$defs": {
+    "AttachmentRef": {
+      "additionalProperties": false,
+      "description": "Reference to an attachment already stored in trusted storage.",
+      "properties": {
+        "attachment_id": {
+          "format": "uuid",
+          "title": "Attachment Id",
+          "type": "string"
+        },
+        "version": {
+          "exclusiveMinimum": 0,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "attachment_id",
+        "version"
+      ],
+      "title": "AttachmentRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:turn-input:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Validated input handed to the Chat Runtime after transport parsing.",
+  "properties": {
+    "attachments": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/AttachmentRef"
+      },
+      "maxItems": 10,
+      "title": "Attachments",
+      "type": "array"
+    },
+    "channel": {
+      "const": "web",
+      "default": "web",
+      "title": "Channel",
+      "type": "string"
+    },
+    "conversation_id": {
+      "format": "uuid",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "format": "uuid",
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "locale": {
+      "const": "fa-IR",
+      "default": "fa-IR",
+      "title": "Locale",
+      "type": "string"
+    },
+    "message_id": {
+      "format": "uuid",
+      "title": "Message Id",
+      "type": "string"
+    },
+    "raw_message": {
+      "maxLength": 32000,
+      "minLength": 1,
+      "title": "Raw Message",
+      "type": "string"
+    },
+    "received_at": {
+      "format": "date-time",
+      "title": "Received At",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "message_id",
+    "conversation_id",
+    "raw_message",
+    "received_at",
+    "idempotency_key"
+  ],
+  "title": "TurnInput",
+  "type": "object"
+}
