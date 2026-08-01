@@ -1,13 +1,13 @@
 """TurnInput contract, schema version 1.0.0."""
 
-from typing import Annotated, Literal
+from typing import Annotated, Final, Literal
 from uuid import UUID
 
 from pydantic import AfterValidator, ConfigDict, Field
 
 from ai_assistant.contracts.base import ContractModel, UtcDateTime
 
-TURN_INPUT_SCHEMA_VERSION = "1.0.0"
+TURN_INPUT_SCHEMA_VERSION: Final[Literal["1.0.0"]] = "1.0.0"
 TURN_INPUT_SCHEMA_ID = "urn:ai-assistant:contracts:turn-input:1.0.0"
 JSON_SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
 MAX_RAW_MESSAGE_LENGTH = 32000
