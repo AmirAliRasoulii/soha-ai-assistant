@@ -1,0 +1,215 @@
+{
+  "$defs": {
+    "RuntimeArtifactRef": {
+      "additionalProperties": false,
+      "description": "Immutable internal manifest reference to one effective configuration artifact.",
+      "properties": {
+        "artifact_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        },
+        "revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "revision",
+        "digest"
+      ],
+      "title": "RuntimeArtifactRef",
+      "type": "object"
+    },
+    "RuntimeFeatureFlag": {
+      "additionalProperties": false,
+      "description": "Effective boolean feature flag recorded for a run.",
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "name": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "enabled"
+      ],
+      "title": "RuntimeFeatureFlag",
+      "type": "object"
+    },
+    "RuntimeSnapshotContent": {
+      "additionalProperties": false,
+      "description": "Effective application and AI configuration references used by a run.",
+      "properties": {
+        "application_version": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "title": "Application Version",
+          "type": "string"
+        },
+        "build_artifact": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "config_bundle": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "embedding_artifact": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "feature_flags": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/RuntimeFeatureFlag"
+          },
+          "maxItems": 64,
+          "title": "Feature Flags",
+          "type": "array"
+        },
+        "index_snapshot": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "model_artifacts": {
+          "items": {
+            "$ref": "#/$defs/RuntimeArtifactRef"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Model Artifacts",
+          "type": "array"
+        },
+        "model_policy": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "prompt_bundle": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "reranker_artifact": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "retrieval_profile": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "rule_bundle": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "security_policy": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "semantic_catalog": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "source_revision": {
+          "maxLength": 64,
+          "minLength": 40,
+          "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$",
+          "title": "Source Revision",
+          "type": "string"
+        },
+        "structured_output_backend": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        },
+        "telemetry_schema": {
+          "$ref": "#/$defs/RuntimeArtifactRef"
+        }
+      },
+      "required": [
+        "application_version",
+        "source_revision",
+        "build_artifact",
+        "config_bundle",
+        "prompt_bundle",
+        "model_policy",
+        "model_artifacts",
+        "structured_output_backend",
+        "retrieval_profile",
+        "embedding_artifact",
+        "reranker_artifact",
+        "index_snapshot",
+        "semantic_catalog",
+        "rule_bundle",
+        "security_policy",
+        "telemetry_schema"
+      ],
+      "title": "RuntimeSnapshotContent",
+      "type": "object"
+    },
+    "RuntimeSnapshotIntegrity": {
+      "additionalProperties": false,
+      "description": "Integrity metadata describing how the content digest was produced.",
+      "properties": {
+        "canonicalization": {
+          "const": "rfc8785",
+          "title": "Canonicalization",
+          "type": "string"
+        },
+        "digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "canonicalization",
+        "digest"
+      ],
+      "title": "RuntimeSnapshotIntegrity",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:runtime-snapshot:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Immutable record of the effective configuration references of a run.",
+  "properties": {
+    "captured_at": {
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "content": {
+      "$ref": "#/$defs/RuntimeSnapshotContent"
+    },
+    "integrity": {
+      "$ref": "#/$defs/RuntimeSnapshotIntegrity"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "format": "uuid",
+      "title": "Snapshot Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "snapshot_id",
+    "captured_at",
+    "content",
+    "integrity"
+  ],
+  "title": "RuntimeSnapshot",
+  "type": "object"
+}

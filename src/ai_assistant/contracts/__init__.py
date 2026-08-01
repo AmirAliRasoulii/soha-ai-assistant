@@ -6,6 +6,13 @@ from ai_assistant.contracts.base import (
     SchemaVersion,
     UtcDateTime,
 )
+from ai_assistant.contracts.runtime_snapshot import (
+    RuntimeArtifactRef,
+    RuntimeFeatureFlag,
+    RuntimeSnapshot,
+    RuntimeSnapshotContent,
+    RuntimeSnapshotIntegrity,
+)
 from ai_assistant.contracts.security import (
     AuthorizationDecision,
     AuthorizationResourceRef,
@@ -19,6 +26,11 @@ __all__ = [
     "AuthorizationDecision",
     "AuthorizationResourceRef",
     "ContractModel",
+    "RuntimeArtifactRef",
+    "RuntimeFeatureFlag",
+    "RuntimeSnapshot",
+    "RuntimeSnapshotContent",
+    "RuntimeSnapshotIntegrity",
     "SchemaVersion",
     "SecurityPrincipalContext",
     "TurnInput",
