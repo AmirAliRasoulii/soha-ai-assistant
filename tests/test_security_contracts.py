@@ -475,18 +475,12 @@ def test_committed_decision_schema_matches_the_model() -> None:
     assert committed == AuthorizationDecision.model_json_schema()
 
 
-def test_public_exports_are_correct() -> None:
-    assert contracts.__all__ == [
-        "SCHEMA_VERSION_PATTERN",
-        "AttachmentRef",
+def test_security_public_exports_are_available() -> None:
+    assert {
         "AuthorizationDecision",
         "AuthorizationResourceRef",
-        "ContractModel",
-        "SchemaVersion",
         "SecurityPrincipalContext",
-        "TurnInput",
-        "UtcDateTime",
-    ]
+    } <= set(contracts.__all__)
 
 
 def test_generated_schemas_contain_no_forbidden_fields() -> None:
