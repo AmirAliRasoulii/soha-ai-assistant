@@ -1,0 +1,1437 @@
+{
+  "$defs": {
+    "AllowedEvidenceClaim": {
+      "additionalProperties": false,
+      "description": "Authorized semantic claim shape backed by accepted evidence.",
+      "properties": {
+        "claim_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Claim Code",
+          "type": "string"
+        },
+        "claim_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Claim Type",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "subject": {
+          "$ref": "#/$defs/EvidenceSubjectRef"
+        },
+        "supporting_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supporting Fact Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "claim_id",
+        "claim_code",
+        "claim_type",
+        "subject",
+        "supporting_fact_ids",
+        "evidence_ids"
+      ],
+      "title": "AllowedEvidenceClaim",
+      "type": "object"
+    },
+    "DocumentEvidence": {
+      "additionalProperties": false,
+      "description": "Normalized evidence produced by document retrieval.",
+      "properties": {
+        "allowed_uses": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Allowed Uses",
+          "type": "array"
+        },
+        "authority": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority",
+          "type": "string"
+        },
+        "chunk_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Chunk Ref",
+          "type": "string"
+        },
+        "content_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Content Ref",
+          "type": "string"
+        },
+        "content_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "document_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Document Ref",
+          "type": "string"
+        },
+        "document_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Document Version",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "const": "document",
+          "default": "document",
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "title": "Freshness",
+          "type": "string"
+        },
+        "locator_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Locator Ref",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/EvidenceProvenance"
+        },
+        "ranking_score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ranking Score"
+        },
+        "retention_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "security_scope": {
+          "$ref": "#/$defs/EvidenceSecurityScope"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSourceRef"
+        },
+        "source_time": {
+          "$ref": "#/$defs/EvidenceSourceTime"
+        },
+        "subject": {
+          "$ref": "#/$defs/EvidenceSubjectRef"
+        },
+        "supports_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supports Fact Ids",
+          "type": "array"
+        },
+        "valid_time": {
+          "$ref": "#/$defs/EvidenceValidityWindow"
+        },
+        "validation_status": {
+          "enum": [
+            "validated",
+            "degraded"
+          ],
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "subject",
+        "valid_time",
+        "source_time",
+        "source",
+        "authority",
+        "security_scope",
+        "validation_status",
+        "freshness",
+        "provenance",
+        "allowed_uses",
+        "retention_class",
+        "supports_fact_ids",
+        "document_ref",
+        "document_version",
+        "chunk_ref",
+        "locator_ref",
+        "content_ref",
+        "content_sha256"
+      ],
+      "title": "DocumentEvidence",
+      "type": "object"
+    },
+    "EvidenceConflict": {
+      "additionalProperties": false,
+      "description": "Detected disagreement between accepted evidence about one fact.",
+      "properties": {
+        "conflict_id": {
+          "format": "uuid",
+          "title": "Conflict Id",
+          "type": "string"
+        },
+        "controlling_evidence_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Controlling Evidence Id"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 2,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "fact_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "resolution_code": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolution Code"
+        },
+        "status": {
+          "enum": [
+            "resolved",
+            "unresolved"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conflict_id",
+        "fact_id",
+        "evidence_ids",
+        "status"
+      ],
+      "title": "EvidenceConflict",
+      "type": "object"
+    },
+    "EvidenceProvenance": {
+      "additionalProperties": false,
+      "description": "Provider-neutral description of what materialized an evidence record.",
+      "properties": {
+        "capability": {
+          "enum": [
+            "document_retrieval",
+            "semantic_analytics",
+            "personal_selector",
+            "rule_evaluator",
+            "official_search"
+          ],
+          "title": "Capability",
+          "type": "string"
+        },
+        "input_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Input Digest",
+          "type": "string"
+        },
+        "materializer_version": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "title": "Materializer Version",
+          "type": "string"
+        },
+        "operation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Operation",
+          "type": "string"
+        },
+        "plan_id": {
+          "format": "uuid",
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "step_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Step Id",
+          "type": "string"
+        },
+        "step_result_id": {
+          "format": "uuid",
+          "title": "Step Result Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_result_id",
+        "plan_id",
+        "step_id",
+        "capability",
+        "operation",
+        "materializer_version",
+        "input_digest"
+      ],
+      "title": "EvidenceProvenance",
+      "type": "object"
+    },
+    "EvidenceSecurityScope": {
+      "additionalProperties": false,
+      "description": "Descriptive security binding of an evidence record.",
+      "properties": {
+        "classification": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Classification",
+          "type": "string"
+        },
+        "data_scope": {
+          "enum": [
+            "general",
+            "personal"
+          ],
+          "title": "Data Scope",
+          "type": "string"
+        },
+        "scope_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Scope Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope_ref",
+        "data_scope",
+        "classification"
+      ],
+      "title": "EvidenceSecurityScope",
+      "type": "object"
+    },
+    "EvidenceSourceRef": {
+      "additionalProperties": false,
+      "description": "Provider-neutral reference to the source system of an evidence record.",
+      "properties": {
+        "source_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "source_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Source Type",
+          "type": "string"
+        },
+        "source_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Source Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_type",
+        "source_ref",
+        "source_version"
+      ],
+      "title": "EvidenceSourceRef",
+      "type": "object"
+    },
+    "EvidenceSourceTime": {
+      "additionalProperties": false,
+      "description": "Observation and publication timing of the underlying source.",
+      "properties": {
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        }
+      },
+      "required": [
+        "observed_at"
+      ],
+      "title": "EvidenceSourceTime",
+      "type": "object"
+    },
+    "EvidenceSubjectRef": {
+      "additionalProperties": false,
+      "description": "Controlled reference to the subject an evidence record describes.",
+      "properties": {
+        "subject_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Subject Ref",
+          "type": "string"
+        },
+        "subject_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Subject Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subject_type",
+        "subject_ref"
+      ],
+      "title": "EvidenceSubjectRef",
+      "type": "object"
+    },
+    "EvidenceValidityWindow": {
+      "additionalProperties": false,
+      "description": "Validity context of an evidence record relative to an observation.",
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "valid_from": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid From"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid To"
+        }
+      },
+      "required": [
+        "as_of"
+      ],
+      "title": "EvidenceValidityWindow",
+      "type": "object"
+    },
+    "FactEvidenceMapEntry": {
+      "additionalProperties": false,
+      "description": "Exact mapping between one required fact and its supporting evidence.",
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "fact_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Fact Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id",
+        "evidence_ids"
+      ],
+      "title": "FactEvidenceMapEntry",
+      "type": "object"
+    },
+    "ProhibitedEvidenceClaim": {
+      "additionalProperties": false,
+      "description": "Claim shape that trusted policy forbids for this bundle.",
+      "properties": {
+        "claim_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Claim Code",
+          "type": "string"
+        },
+        "reason_codes": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Reason Codes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "claim_code",
+        "reason_codes"
+      ],
+      "title": "ProhibitedEvidenceClaim",
+      "type": "object"
+    },
+    "RejectedEvidenceRef": {
+      "additionalProperties": false,
+      "description": "Controlled record of evidence excluded during normalization.",
+      "properties": {
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "enum": [
+            "document",
+            "sql",
+            "selector",
+            "rule",
+            "web"
+          ],
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "reason_codes": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Reason Codes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "evidence_type",
+        "reason_codes"
+      ],
+      "title": "RejectedEvidenceRef",
+      "type": "object"
+    },
+    "RuleEvidence": {
+      "additionalProperties": false,
+      "description": "Normalized evidence produced by deterministic rule evaluation.",
+      "properties": {
+        "allowed_uses": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Allowed Uses",
+          "type": "array"
+        },
+        "authority": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "const": "rule",
+          "default": "rule",
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "title": "Freshness",
+          "type": "string"
+        },
+        "input_evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Input Evidence Ids",
+          "type": "array"
+        },
+        "outcome_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Outcome Ref",
+          "type": "string"
+        },
+        "outcome_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Outcome Sha256",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/EvidenceProvenance"
+        },
+        "retention_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "rule_bundle_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Rule Bundle Ref",
+          "type": "string"
+        },
+        "rule_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Rule Code",
+          "type": "string"
+        },
+        "rule_version": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "security_scope": {
+          "$ref": "#/$defs/EvidenceSecurityScope"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSourceRef"
+        },
+        "source_time": {
+          "$ref": "#/$defs/EvidenceSourceTime"
+        },
+        "subject": {
+          "$ref": "#/$defs/EvidenceSubjectRef"
+        },
+        "supports_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supports Fact Ids",
+          "type": "array"
+        },
+        "valid_time": {
+          "$ref": "#/$defs/EvidenceValidityWindow"
+        },
+        "validation_status": {
+          "enum": [
+            "validated",
+            "degraded"
+          ],
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "subject",
+        "valid_time",
+        "source_time",
+        "source",
+        "authority",
+        "security_scope",
+        "validation_status",
+        "freshness",
+        "provenance",
+        "allowed_uses",
+        "retention_class",
+        "supports_fact_ids",
+        "rule_bundle_ref",
+        "rule_code",
+        "rule_version",
+        "outcome_ref",
+        "outcome_sha256",
+        "input_evidence_ids"
+      ],
+      "title": "RuleEvidence",
+      "type": "object"
+    },
+    "SelectorEvidence": {
+      "additionalProperties": false,
+      "description": "Normalized evidence produced by the governed personal selector.",
+      "properties": {
+        "allowed_uses": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Allowed Uses",
+          "type": "array"
+        },
+        "authority": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "const": "selector",
+          "default": "selector",
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "field_codes": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Field Codes",
+          "type": "array"
+        },
+        "freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "title": "Freshness",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/EvidenceProvenance"
+        },
+        "result_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Result Ref",
+          "type": "string"
+        },
+        "result_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Result Sha256",
+          "type": "string"
+        },
+        "retention_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "security_scope": {
+          "$ref": "#/$defs/EvidenceSecurityScope"
+        },
+        "selector_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Selector Ref",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSourceRef"
+        },
+        "source_time": {
+          "$ref": "#/$defs/EvidenceSourceTime"
+        },
+        "subject": {
+          "$ref": "#/$defs/EvidenceSubjectRef"
+        },
+        "supports_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supports Fact Ids",
+          "type": "array"
+        },
+        "valid_time": {
+          "$ref": "#/$defs/EvidenceValidityWindow"
+        },
+        "validation_status": {
+          "enum": [
+            "validated",
+            "degraded"
+          ],
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "subject",
+        "valid_time",
+        "source_time",
+        "source",
+        "authority",
+        "security_scope",
+        "validation_status",
+        "freshness",
+        "provenance",
+        "allowed_uses",
+        "retention_class",
+        "supports_fact_ids",
+        "selector_ref",
+        "result_ref",
+        "result_sha256",
+        "field_codes"
+      ],
+      "title": "SelectorEvidence",
+      "type": "object"
+    },
+    "SqlEvidence": {
+      "additionalProperties": false,
+      "description": "Normalized evidence produced by governed semantic analytics.",
+      "properties": {
+        "allowed_uses": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Allowed Uses",
+          "type": "array"
+        },
+        "authority": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "const": "sql",
+          "default": "sql",
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "filter_codes": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Filter Codes",
+          "type": "array"
+        },
+        "freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "title": "Freshness",
+          "type": "string"
+        },
+        "metric_codes": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Metric Codes",
+          "type": "array"
+        },
+        "provenance": {
+          "$ref": "#/$defs/EvidenceProvenance"
+        },
+        "result_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Result Ref",
+          "type": "string"
+        },
+        "result_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Result Sha256",
+          "type": "string"
+        },
+        "result_shape": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Result Shape",
+          "type": "string"
+        },
+        "retention_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "security_scope": {
+          "$ref": "#/$defs/EvidenceSecurityScope"
+        },
+        "semantic_catalog_version": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "title": "Semantic Catalog Version",
+          "type": "string"
+        },
+        "semantic_query_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Semantic Query Ref",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSourceRef"
+        },
+        "source_time": {
+          "$ref": "#/$defs/EvidenceSourceTime"
+        },
+        "subject": {
+          "$ref": "#/$defs/EvidenceSubjectRef"
+        },
+        "supports_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supports Fact Ids",
+          "type": "array"
+        },
+        "suppression_applied": {
+          "title": "Suppression Applied",
+          "type": "boolean"
+        },
+        "valid_time": {
+          "$ref": "#/$defs/EvidenceValidityWindow"
+        },
+        "validation_status": {
+          "enum": [
+            "validated",
+            "degraded"
+          ],
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "subject",
+        "valid_time",
+        "source_time",
+        "source",
+        "authority",
+        "security_scope",
+        "validation_status",
+        "freshness",
+        "provenance",
+        "allowed_uses",
+        "retention_class",
+        "supports_fact_ids",
+        "semantic_query_ref",
+        "semantic_catalog_version",
+        "result_ref",
+        "result_sha256",
+        "metric_codes",
+        "result_shape",
+        "suppression_applied"
+      ],
+      "title": "SqlEvidence",
+      "type": "object"
+    },
+    "WebEvidence": {
+      "additionalProperties": false,
+      "description": "Normalized evidence produced by allowlisted official web search.",
+      "properties": {
+        "allowed_uses": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Allowed Uses",
+          "type": "array"
+        },
+        "allowlist_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Allowlist Ref",
+          "type": "string"
+        },
+        "authority": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority",
+          "type": "string"
+        },
+        "content_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Content Ref",
+          "type": "string"
+        },
+        "content_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "const": "web",
+          "default": "web",
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "freshness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "title": "Freshness",
+          "type": "string"
+        },
+        "locator_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Locator Ref",
+          "type": "string"
+        },
+        "page_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Page Ref",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/EvidenceProvenance"
+        },
+        "retention_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "security_scope": {
+          "$ref": "#/$defs/EvidenceSecurityScope"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSourceRef"
+        },
+        "source_time": {
+          "$ref": "#/$defs/EvidenceSourceTime"
+        },
+        "subject": {
+          "$ref": "#/$defs/EvidenceSubjectRef"
+        },
+        "supports_fact_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Supports Fact Ids",
+          "type": "array"
+        },
+        "valid_time": {
+          "$ref": "#/$defs/EvidenceValidityWindow"
+        },
+        "validation_status": {
+          "enum": [
+            "validated",
+            "degraded"
+          ],
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "subject",
+        "valid_time",
+        "source_time",
+        "source",
+        "authority",
+        "security_scope",
+        "validation_status",
+        "freshness",
+        "provenance",
+        "allowed_uses",
+        "retention_class",
+        "supports_fact_ids",
+        "page_ref",
+        "allowlist_ref",
+        "locator_ref",
+        "content_ref",
+        "content_sha256"
+      ],
+      "title": "WebEvidence",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:evidence:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Deterministic evidence normalization and sufficiency decision.",
+  "properties": {
+    "accepted_evidence": {
+      "default": [],
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "document": "#/$defs/DocumentEvidence",
+            "rule": "#/$defs/RuleEvidence",
+            "selector": "#/$defs/SelectorEvidence",
+            "sql": "#/$defs/SqlEvidence",
+            "web": "#/$defs/WebEvidence"
+          },
+          "propertyName": "evidence_type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/DocumentEvidence"
+          },
+          {
+            "$ref": "#/$defs/SqlEvidence"
+          },
+          {
+            "$ref": "#/$defs/SelectorEvidence"
+          },
+          {
+            "$ref": "#/$defs/RuleEvidence"
+          },
+          {
+            "$ref": "#/$defs/WebEvidence"
+          }
+        ]
+      },
+      "maxItems": 64,
+      "title": "Accepted Evidence",
+      "type": "array"
+    },
+    "allowed_claims": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/AllowedEvidenceClaim"
+      },
+      "maxItems": 64,
+      "title": "Allowed Claims",
+      "type": "array"
+    },
+    "authorization_decision_id": {
+      "format": "uuid",
+      "title": "Authorization Decision Id",
+      "type": "string"
+    },
+    "built_at": {
+      "format": "date-time",
+      "title": "Built At",
+      "type": "string"
+    },
+    "bundle_id": {
+      "format": "uuid",
+      "title": "Bundle Id",
+      "type": "string"
+    },
+    "conflicts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EvidenceConflict"
+      },
+      "maxItems": 32,
+      "title": "Conflicts",
+      "type": "array"
+    },
+    "correlation_id": {
+      "format": "uuid",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "answer",
+        "partial_answer",
+        "clarify",
+        "abstain"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "decision_reason_codes": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "title": "Decision Reason Codes",
+      "type": "array"
+    },
+    "evidence_manager_version": {
+      "maxLength": 32,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Evidence Manager Version",
+      "type": "string"
+    },
+    "fact_map": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FactEvidenceMapEntry"
+      },
+      "maxItems": 32,
+      "title": "Fact Map",
+      "type": "array"
+    },
+    "missing_fact_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 32,
+      "title": "Missing Fact Ids",
+      "type": "array"
+    },
+    "plan_id": {
+      "format": "uuid",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "prohibited_claims": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ProhibitedEvidenceClaim"
+      },
+      "maxItems": 64,
+      "title": "Prohibited Claims",
+      "type": "array"
+    },
+    "rejected_evidence": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RejectedEvidenceRef"
+      },
+      "maxItems": 64,
+      "title": "Rejected Evidence",
+      "type": "array"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "required_fact_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Required Fact Ids",
+      "type": "array"
+    },
+    "route_decision_id": {
+      "format": "uuid",
+      "title": "Route Decision Id",
+      "type": "string"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sufficient": {
+      "title": "Sufficient",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "bundle_id",
+    "request_id",
+    "route_decision_id",
+    "plan_id",
+    "authorization_decision_id",
+    "runtime_snapshot_id",
+    "correlation_id",
+    "built_at",
+    "required_fact_ids",
+    "sufficient",
+    "decision",
+    "decision_reason_codes",
+    "evidence_manager_version"
+  ],
+  "title": "EvidenceBundle",
+  "type": "object"
+}
