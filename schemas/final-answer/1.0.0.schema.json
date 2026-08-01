@@ -1,0 +1,663 @@
+{
+  "$defs": {
+    "AnswerLengthBudget": {
+      "additionalProperties": false,
+      "description": "Hard structural output budget for one response.",
+      "properties": {
+        "max_caveats": {
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Max Caveats",
+          "type": "integer"
+        },
+        "max_characters": {
+          "maximum": 16000,
+          "minimum": 1,
+          "title": "Max Characters",
+          "type": "integer"
+        },
+        "max_citations": {
+          "maximum": 64,
+          "minimum": 0,
+          "title": "Max Citations",
+          "type": "integer"
+        },
+        "max_claims": {
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Max Claims",
+          "type": "integer"
+        },
+        "max_sections": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Max Sections",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_characters",
+        "max_sections",
+        "max_claims",
+        "max_caveats",
+        "max_citations"
+      ],
+      "title": "AnswerLengthBudget",
+      "type": "object"
+    },
+    "DomainError": {
+      "additionalProperties": false,
+      "description": "Machine-readable error semantics produced by trusted runtime code.",
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_INPUT",
+            "UNAUTHENTICATED",
+            "UNAUTHORIZED",
+            "AMBIGUOUS_REQUEST",
+            "POLICY_REJECTED",
+            "NO_EVIDENCE",
+            "CONFLICTING_EVIDENCE",
+            "SCHEMA_INVALID",
+            "DEPENDENCY_TIMEOUT",
+            "TRANSIENT_DEPENDENCY",
+            "BUDGET_EXCEEDED",
+            "RATE_LIMITED",
+            "CAPACITY_REJECTED",
+            "INTERNAL_ERROR"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "internal_detail_ref": {
+          "format": "uuid",
+          "title": "Internal Detail Ref",
+          "type": "string"
+        },
+        "retryable": {
+          "title": "Retryable",
+          "type": "boolean"
+        },
+        "safe_message_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^error\\.[a-z0-9._-]*$",
+          "title": "Safe Message Key",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "safe_message_key",
+        "retryable",
+        "internal_detail_ref"
+      ],
+      "title": "DomainError",
+      "type": "object"
+    },
+    "FinalAnswerSection": {
+      "additionalProperties": false,
+      "description": "One ordered group of validated answer items.",
+      "properties": {
+        "items": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "caveat": "#/$defs/FinalCaveatContent",
+                "claim": "#/$defs/FinalClaimContent"
+              },
+              "propertyName": "item_kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/FinalClaimContent"
+              },
+              {
+                "$ref": "#/$defs/FinalCaveatContent"
+              }
+            ]
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        },
+        "section_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Section Id",
+          "type": "string"
+        },
+        "section_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Section Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "section_id",
+        "section_type",
+        "items"
+      ],
+      "title": "FinalAnswerSection",
+      "type": "object"
+    },
+    "FinalCaveatContent": {
+      "additionalProperties": false,
+      "description": "One validated caveat realization inside the user-visible answer.",
+      "properties": {
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "item_kind": {
+          "const": "caveat",
+          "default": "caveat",
+          "title": "Item Kind",
+          "type": "string"
+        },
+        "rendered_text": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Rendered Text",
+          "type": "string"
+        },
+        "validation_status": {
+          "const": "authorized",
+          "default": "authorized",
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "rendered_text"
+      ],
+      "title": "FinalCaveatContent",
+      "type": "object"
+    },
+    "FinalCitation": {
+      "additionalProperties": false,
+      "description": "One compiled citation realizing exactly one planned citation slot.",
+      "properties": {
+        "citation_id": {
+          "format": "uuid",
+          "title": "Citation Id",
+          "type": "string"
+        },
+        "placement": {
+          "enum": [
+            "inline",
+            "section_end",
+            "answer_end"
+          ],
+          "title": "Placement",
+          "type": "string"
+        },
+        "slot_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Slot Id",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/FinalCitationSource"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Sources",
+          "type": "array"
+        },
+        "target_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "target_kind": {
+          "enum": [
+            "claim",
+            "caveat"
+          ],
+          "title": "Target Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "citation_id",
+        "slot_id",
+        "target_kind",
+        "target_id",
+        "placement",
+        "sources"
+      ],
+      "title": "FinalCitation",
+      "type": "object"
+    },
+    "FinalCitationSource": {
+      "additionalProperties": false,
+      "description": "One compiled evidence source backing a citation.",
+      "properties": {
+        "display_label": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Display Label",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_type": {
+          "enum": [
+            "document",
+            "sql",
+            "selector",
+            "rule",
+            "web"
+          ],
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "locator_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Locator Ref",
+          "type": "string"
+        },
+        "source_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]*$",
+          "title": "Source Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "evidence_type",
+        "display_label",
+        "source_version",
+        "locator_ref"
+      ],
+      "title": "FinalCitationSource",
+      "type": "object"
+    },
+    "FinalClaimContent": {
+      "additionalProperties": false,
+      "description": "One validated claim realization inside the user-visible answer.",
+      "properties": {
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "item_kind": {
+          "const": "claim",
+          "default": "claim",
+          "title": "Item Kind",
+          "type": "string"
+        },
+        "rendered_text": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Rendered Text",
+          "type": "string"
+        },
+        "validation_status": {
+          "const": "supported",
+          "default": "supported",
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "rendered_text"
+      ],
+      "title": "FinalClaimContent",
+      "type": "object"
+    },
+    "FinalFreshnessNote": {
+      "additionalProperties": false,
+      "description": "Disclosed freshness of the evidence behind the final answer.",
+      "properties": {
+        "data_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Data As Of"
+        },
+        "reason_codes": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9._:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Reason Codes",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "current",
+            "stale",
+            "mixed",
+            "unknown",
+            "not_applicable"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "FinalFreshnessNote",
+      "type": "object"
+    },
+    "FinalResponseMetadata": {
+      "additionalProperties": false,
+      "description": "Trace-safe structural description of the final response.",
+      "properties": {
+        "answer_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "direct",
+                "summary",
+                "explanation",
+                "comparison",
+                "procedure",
+                "status",
+                "eligibility",
+                "analytics",
+                "composite",
+                "clarification",
+                "abstention"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Answer Type"
+        },
+        "caveat_count": {
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Caveat Count",
+          "type": "integer"
+        },
+        "character_count": {
+          "maximum": 16000,
+          "minimum": 0,
+          "title": "Character Count",
+          "type": "integer"
+        },
+        "citation_count": {
+          "maximum": 64,
+          "minimum": 0,
+          "title": "Citation Count",
+          "type": "integer"
+        },
+        "claim_count": {
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Claim Count",
+          "type": "integer"
+        },
+        "degraded": {
+          "title": "Degraded",
+          "type": "boolean"
+        },
+        "generation_mode": {
+          "enum": [
+            "deterministic_template",
+            "model_generated",
+            "model_repaired",
+            "safe_fallback",
+            "none"
+          ],
+          "title": "Generation Mode",
+          "type": "string"
+        },
+        "response_locale": {
+          "anyOf": [
+            {
+              "maxLength": 35,
+              "minLength": 2,
+              "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Response Locale"
+        },
+        "section_count": {
+          "maximum": 8,
+          "minimum": 0,
+          "title": "Section Count",
+          "type": "integer"
+        },
+        "validation_status": {
+          "enum": [
+            "passed",
+            "not_applicable"
+          ],
+          "title": "Validation Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "generation_mode",
+        "validation_status",
+        "degraded",
+        "section_count",
+        "claim_count",
+        "caveat_count",
+        "citation_count",
+        "character_count"
+      ],
+      "title": "FinalResponseMetadata",
+      "type": "object"
+    },
+    "FinalValidatedContent": {
+      "additionalProperties": false,
+      "description": "The complete ordered user-visible content of one final answer.",
+      "properties": {
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/FinalAnswerSection"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Sections",
+          "type": "array"
+        }
+      },
+      "required": [
+        "sections"
+      ],
+      "title": "FinalValidatedContent",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:final-answer:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The single successfully finalized answer artifact returned by the AI Core.",
+  "properties": {
+    "answer_plan_id": {
+      "format": "uuid",
+      "title": "Answer Plan Id",
+      "type": "string"
+    },
+    "applied_length_budget": {
+      "$ref": "#/$defs/AnswerLengthBudget"
+    },
+    "authorization_decision_id": {
+      "format": "uuid",
+      "title": "Authorization Decision Id",
+      "type": "string"
+    },
+    "citations": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FinalCitation"
+      },
+      "maxItems": 64,
+      "title": "Citations",
+      "type": "array"
+    },
+    "correlation_id": {
+      "format": "uuid",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "evidence_bundle_id": {
+      "format": "uuid",
+      "title": "Evidence Bundle Id",
+      "type": "string"
+    },
+    "final_answer_id": {
+      "format": "uuid",
+      "title": "Final Answer Id",
+      "type": "string"
+    },
+    "finalized_at": {
+      "format": "date-time",
+      "title": "Finalized At",
+      "type": "string"
+    },
+    "finalizer_version": {
+      "maxLength": 32,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Finalizer Version",
+      "type": "string"
+    },
+    "freshness_note": {
+      "$ref": "#/$defs/FinalFreshnessNote"
+    },
+    "outcome": {
+      "enum": [
+        "answered",
+        "partially_answered",
+        "clarification_required",
+        "abstained",
+        "failed"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "outcome_reason_codes": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Outcome Reason Codes",
+      "type": "array"
+    },
+    "plan_id": {
+      "format": "uuid",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "response_metadata": {
+      "$ref": "#/$defs/FinalResponseMetadata"
+    },
+    "route_decision_id": {
+      "format": "uuid",
+      "title": "Route Decision Id",
+      "type": "string"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "safe_error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DomainError"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "validated_content": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FinalValidatedContent"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "final_answer_id",
+    "request_id",
+    "answer_plan_id",
+    "evidence_bundle_id",
+    "route_decision_id",
+    "plan_id",
+    "authorization_decision_id",
+    "runtime_snapshot_id",
+    "correlation_id",
+    "finalized_at",
+    "outcome",
+    "freshness_note",
+    "applied_length_budget",
+    "response_metadata",
+    "finalizer_version"
+  ],
+  "title": "FinalAnswer",
+  "type": "object"
+}
