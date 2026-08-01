@@ -445,7 +445,7 @@ class RuntimeSnapshotTests(unittest.TestCase):
         self.assertEqual(restored, snapshot)
 
     def test_forbidden_fields_rejected(self) -> None:
-        for field in FORBIDDEN_FIELDS + ("run_id",):
+        for field in (*FORBIDDEN_FIELDS, "run_id"):
             with self.subTest(field=field), self.assertRaises(ValidationError):
                 RuntimeSnapshot(**snapshot_payload(**{field: "injected"}))
             with self.subTest(field=field, level="content"), self.assertRaises(ValidationError):
