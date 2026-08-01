@@ -9,9 +9,7 @@ from ai_assistant.contracts.base import ContractModel, SchemaVersion, UtcDateTim
 
 JSON_SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
 SECURITY_PRINCIPAL_CONTEXT_SCHEMA_VERSION: Final[Literal["1.0.0"]] = "1.0.0"
-SECURITY_PRINCIPAL_CONTEXT_SCHEMA_ID = (
-    "urn:ai-assistant:contracts:security-principal-context:1.0.0"
-)
+SECURITY_PRINCIPAL_CONTEXT_SCHEMA_ID = "urn:ai-assistant:contracts:security-principal-context:1.0.0"
 AUTHORIZATION_DECISION_SCHEMA_VERSION: Final[Literal["1.0.0"]] = "1.0.0"
 AUTHORIZATION_DECISION_SCHEMA_ID = "urn:ai-assistant:contracts:authorization-decision:1.0.0"
 
