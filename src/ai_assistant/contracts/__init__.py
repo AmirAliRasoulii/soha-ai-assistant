@@ -6,6 +6,11 @@ from ai_assistant.contracts.base import (
     SchemaVersion,
     UtcDateTime,
 )
+from ai_assistant.contracts.audit import (
+    AuditActorRef,
+    AuditEvent,
+    AuditResourceRef,
+)
 from ai_assistant.contracts.errors import (
     DomainError,
     ErrorCode,
@@ -30,6 +35,9 @@ __all__ = [
     "AttachmentRef",
     "AuthorizationDecision",
     "AuthorizationResourceRef",
+    "AuditActorRef",
+    "AuditEvent",
+    "AuditResourceRef",
     "ContractModel",
     "DomainError",
     "ErrorCode",

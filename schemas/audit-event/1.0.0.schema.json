@@ -1,0 +1,252 @@
+{
+  "$defs": {
+    "AuditActorRef": {
+      "additionalProperties": false,
+      "description": "Trusted identity reference recorded for an audited action.",
+      "properties": {
+        "actor_type": {
+          "enum": [
+            "user",
+            "service",
+            "system"
+          ],
+          "title": "Actor Type",
+          "type": "string"
+        },
+        "principal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Principal Id"
+        },
+        "security_context_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Context Id"
+        }
+      },
+      "required": [
+        "actor_type"
+      ],
+      "title": "AuditActorRef",
+      "type": "object"
+    },
+    "AuditResourceRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to the resource affected by an audited action.",
+      "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
+        "resource_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Resource Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resource_type",
+        "resource_id"
+      ],
+      "title": "AuditResourceRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:audit-event:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Safe, minimal, replayable audit fact emitted by trusted AI runtime code.",
+  "properties": {
+    "action": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Action",
+      "type": "string"
+    },
+    "actor": {
+      "$ref": "#/$defs/AuditActorRef"
+    },
+    "authorization_decision_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Authorization Decision Id"
+    },
+    "correlation_id": {
+      "format": "uuid",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "error_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Id"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Event Type",
+      "type": "string"
+    },
+    "internal_detail_ref": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Internal Detail Ref"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "success",
+        "denied",
+        "failed"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "producer": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Producer",
+      "type": "string"
+    },
+    "reason_codes": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "resource": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuditResourceRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "retention_class": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Retention Class",
+      "type": "string"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sensitivity": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Sensitivity",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "producer",
+    "correlation_id",
+    "request_id",
+    "actor",
+    "action",
+    "outcome",
+    "runtime_snapshot_id",
+    "retention_class",
+    "sensitivity"
+  ],
+  "title": "AuditEvent",
+  "type": "object"
+}
