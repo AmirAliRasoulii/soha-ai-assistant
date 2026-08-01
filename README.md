@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Foundation repository for a production-grade AI assistant. This commit contains
+Foundation repository for a production-grade AI assistant. This branch contains
 only the minimal skeleton needed to develop, test, and review future changes
 through Git.
 
@@ -18,7 +18,9 @@ dependencies.
 ai-assistant/
 ├── README.md
 ├── .gitignore
+├── .python-version
 ├── pyproject.toml
+├── uv.lock
 ├── src/
 │   └── ai_assistant/
 │       ├── __init__.py
@@ -36,14 +38,21 @@ ai-assistant/
 - User-facing content will be Persian.
 - Comments explain only non-obvious decisions or constraints.
 
-## Verification
+## Local setup
 
 ```
+uv sync --locked
 ./scripts/verify.sh
 ```
 
-The script compiles all Python sources and runs the `unittest` suite. It
-requires no network access and installs nothing.
+- `uv` is the only environment and dependency manager for this project.
+- `uv` creates and manages the project-local `.venv`; activating it is not
+  required, because `uv run` selects it automatically.
+- `uv.lock` is committed and must stay in sync with `pyproject.toml`.
+- Add dependencies with `uv add`; never use `conda install`, `pip install`,
+  `uv pip install`, or `--active` for project dependencies.
+- The project is installed as a package, so `import ai_assistant` must work
+  without setting `PYTHONPATH`.
 
 ## Process
 
