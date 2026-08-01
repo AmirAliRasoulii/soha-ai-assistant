@@ -6,6 +6,11 @@ from ai_assistant.contracts.base import (
     SchemaVersion,
     UtcDateTime,
 )
+from ai_assistant.contracts.errors import (
+    DomainError,
+    ErrorCode,
+    ErrorEnvelope,
+)
 from ai_assistant.contracts.runtime_snapshot import (
     RuntimeArtifactRef,
     RuntimeFeatureFlag,
@@ -26,6 +31,9 @@ __all__ = [
     "AuthorizationDecision",
     "AuthorizationResourceRef",
     "ContractModel",
+    "DomainError",
+    "ErrorCode",
+    "ErrorEnvelope",
     "RuntimeArtifactRef",
     "RuntimeFeatureFlag",
     "RuntimeSnapshot",

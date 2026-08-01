@@ -1,0 +1,86 @@
+{
+  "$defs": {
+    "DomainError": {
+      "additionalProperties": false,
+      "description": "Machine-readable error semantics produced by trusted runtime code.",
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_INPUT",
+            "UNAUTHENTICATED",
+            "UNAUTHORIZED",
+            "AMBIGUOUS_REQUEST",
+            "POLICY_REJECTED",
+            "NO_EVIDENCE",
+            "CONFLICTING_EVIDENCE",
+            "SCHEMA_INVALID",
+            "DEPENDENCY_TIMEOUT",
+            "TRANSIENT_DEPENDENCY",
+            "BUDGET_EXCEEDED",
+            "RATE_LIMITED",
+            "CAPACITY_REJECTED",
+            "INTERNAL_ERROR"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "internal_detail_ref": {
+          "format": "uuid",
+          "title": "Internal Detail Ref",
+          "type": "string"
+        },
+        "retryable": {
+          "title": "Retryable",
+          "type": "boolean"
+        },
+        "safe_message_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^error\\.[a-z0-9._-]*$",
+          "title": "Safe Message Key",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "safe_message_key",
+        "retryable",
+        "internal_detail_ref"
+      ],
+      "title": "DomainError",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:error-envelope:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Canonical internal error contract of the AI Core.",
+  "properties": {
+    "correlation_id": {
+      "format": "uuid",
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "error": {
+      "$ref": "#/$defs/DomainError"
+    },
+    "error_id": {
+      "format": "uuid",
+      "title": "Error Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "error_id",
+    "correlation_id",
+    "error"
+  ],
+  "title": "ErrorEnvelope",
+  "type": "object"
+}
