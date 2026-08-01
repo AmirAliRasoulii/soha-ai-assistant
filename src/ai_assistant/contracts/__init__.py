@@ -27,6 +27,13 @@ from ai_assistant.contracts.query_analysis import (
     RiskLevel,
     TimeExpressionType,
 )
+from ai_assistant.contracts.route_decision import (
+    CapabilityName,
+    RouteBudget,
+    RouteDecision,
+    RouteFilterRef,
+    RouteLane,
+)
 from ai_assistant.contracts.runtime_snapshot import (
     RuntimeArtifactRef,
     RuntimeFeatureFlag,
@@ -50,6 +57,7 @@ __all__ = [
     "AuditResourceRef",
     "AuthorizationDecision",
     "AuthorizationResourceRef",
+    "CapabilityName",
     "ContractModel",
     "DomainError",
     "EntityResolutionStatus",
@@ -61,6 +69,10 @@ __all__ = [
     "QueryIntent",
     "QueryTimeExpression",
     "RiskLevel",
+    "RouteBudget",
+    "RouteDecision",
+    "RouteFilterRef",
+    "RouteLane",
     "RuntimeArtifactRef",
     "RuntimeFeatureFlag",
     "RuntimeSnapshot",

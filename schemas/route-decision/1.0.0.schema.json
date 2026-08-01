@@ -1,0 +1,240 @@
+{
+  "$defs": {
+    "RouteBudget": {
+      "additionalProperties": false,
+      "description": "Frozen count-based execution limits for a routed turn.",
+      "properties": {
+        "max_analytics_repairs": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Max Analytics Repairs",
+          "type": "integer"
+        },
+        "max_answer_repairs": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Max Answer Repairs",
+          "type": "integer"
+        },
+        "max_parallel_steps": {
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Max Parallel Steps",
+          "type": "integer"
+        },
+        "max_replans": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Max Replans",
+          "type": "integer"
+        },
+        "max_retrieval_retries": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Max Retrieval Retries",
+          "type": "integer"
+        },
+        "max_steps": {
+          "maximum": 5,
+          "minimum": 0,
+          "title": "Max Steps",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_steps",
+        "max_parallel_steps",
+        "max_replans",
+        "max_retrieval_retries",
+        "max_analytics_repairs",
+        "max_answer_repairs"
+      ],
+      "title": "RouteBudget",
+      "type": "object"
+    },
+    "RouteFilterRef": {
+      "additionalProperties": false,
+      "description": "Reference to an already approved filter or constraint set.",
+      "properties": {
+        "filter_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Filter Ref",
+          "type": "string"
+        },
+        "filter_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Filter Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "filter_type",
+        "filter_ref"
+      ],
+      "title": "RouteFilterRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:route-decision:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Immutable output of trusted deterministic routing policy.",
+  "properties": {
+    "allowed_capabilities": {
+      "default": [],
+      "items": {
+        "enum": [
+          "document_retrieval",
+          "semantic_analytics",
+          "personal_selector",
+          "rule_evaluator",
+          "official_search"
+        ],
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Allowed Capabilities",
+      "type": "array"
+    },
+    "approved_flow_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approved Flow Ref"
+    },
+    "authorization_decision_id": {
+      "format": "uuid",
+      "title": "Authorization Decision Id",
+      "type": "string"
+    },
+    "budget": {
+      "$ref": "#/$defs/RouteBudget"
+    },
+    "decided_at": {
+      "format": "date-time",
+      "title": "Decided At",
+      "type": "string"
+    },
+    "decision_id": {
+      "format": "uuid",
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "effective_risk_level": {
+      "enum": [
+        "normal",
+        "elevated",
+        "high",
+        "unknown"
+      ],
+      "title": "Effective Risk Level",
+      "type": "string"
+    },
+    "filters": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RouteFilterRef"
+      },
+      "maxItems": 32,
+      "title": "Filters",
+      "type": "array"
+    },
+    "lane": {
+      "enum": [
+        "deterministic",
+        "fast",
+        "composite",
+        "clarify",
+        "abstain",
+        "deny"
+      ],
+      "title": "Lane",
+      "type": "string"
+    },
+    "planner_required": {
+      "title": "Planner Required",
+      "type": "boolean"
+    },
+    "policy_version": {
+      "maxLength": 32,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "query_analysis_id": {
+      "format": "uuid",
+      "title": "Query Analysis Id",
+      "type": "string"
+    },
+    "rationale_code": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Rationale Code",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "required_facts": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 32,
+      "title": "Required Facts",
+      "type": "array"
+    },
+    "route": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Route",
+      "type": "string"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "decision_id",
+    "request_id",
+    "query_analysis_id",
+    "authorization_decision_id",
+    "runtime_snapshot_id",
+    "decided_at",
+    "effective_risk_level",
+    "lane",
+    "route",
+    "planner_required",
+    "budget",
+    "rationale_code",
+    "policy_version"
+  ],
+  "title": "RouteDecision",
+  "type": "object"
+}
