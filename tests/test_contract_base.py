@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -79,7 +79,7 @@ def test_naive_datetime_string_is_rejected() -> None:
 
 
 def test_utc_datetime_remains_utc() -> None:
-    moment = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    moment = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
     event = SampleEvent(occurred_at=moment)
     assert event.occurred_at.utcoffset() == timedelta(0)
     assert event.occurred_at == moment
@@ -101,7 +101,7 @@ def test_conversion_preserves_the_same_instant() -> None:
 
 def test_json_datetime_string_is_parsed() -> None:
     event = SampleEvent.model_validate_json('{"occurred_at": "2026-01-01T12:00:00+03:30"}')
-    assert event.occurred_at == datetime(2026, 1, 1, 8, 30, 0, tzinfo=timezone.utc)
+    assert event.occurred_at == datetime(2026, 1, 1, 8, 30, 0, tzinfo=UTC)
 
 
 def test_serialized_datetime_includes_timezone() -> None:
