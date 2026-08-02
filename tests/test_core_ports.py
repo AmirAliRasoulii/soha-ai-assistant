@@ -2,6 +2,7 @@
 
 import ast
 import inspect
+import sys
 from pathlib import Path
 
 from ai_assistant.contracts import (
@@ -119,33 +120,7 @@ def test_core_package_has_no_public_re_exports() -> None:
 
 def test_core_source_has_only_allowed_imports_and_no_dynamic_payloads() -> None:
     root = Path(__file__).resolve().parents[1] / "src" / "ai_assistant" / "core"
-    prohibited = (
-        "fastapi",
-        "starlette",
-        "flask",
-        "django",
-        "httpx",
-        "requests",
-        "sqlalchemy",
-        "psycopg",
-        "asyncpg",
-        "redis",
-        "opensearch",
-        "elasticsearch",
-        "langchain",
-        "llama_index",
-        "anthropic",
-        "openai",
-        "google.cloud",
-        "boto3",
-        "azure",
-        "langfuse",
-        "opentelemetry",
-        "dotenv",
-        "pydantic_settings",
-        "kubernetes",
-    )
-    forbidden_fields = {"Any", "dict", "Mapping", "metadata", "attributes", "payload"}
+    stdlib = set(sys.stdlib_module_names)
     for path in root.glob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
@@ -155,14 +130,15 @@ def test_core_source_has_only_allowed_imports_and_no_dynamic_payloads() -> None:
                 names = [node.module or ""]
             else:
                 continue
-            assert all(
-                not any(name == prefix or name.startswith(prefix + ".") for prefix in prohibited)
-                for name in names
-            )
+            for name in names:
+                root_name = name.split(".", 1)[0]
+                assert (
+                    root_name in stdlib
+                    or name.startswith("ai_assistant.contracts")
+                    or name.startswith("ai_assistant.core")
+                )
         source = path.read_text(encoding="utf-8")
         assert "Any" not in source
         assert "Mapping[str, object]" not in source
-        assert not any(
-            f"{field}[" in source for field in forbidden_fields if field not in {"dict", "Mapping"}
-        )
         assert "dict[" not in source
+        assert not any(field in source for field in ("metadata:", "attributes:", "payload:"))

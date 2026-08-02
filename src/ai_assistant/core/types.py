@@ -3,11 +3,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
+from typing import get_args
 
 from ai_assistant.contracts import (
     AuthorizationDecision,
-    CapabilityName,
-    ErrorCode,
     ErrorEnvelope,
     ExecutionPlan,
     FinalAnswer,
@@ -19,6 +18,8 @@ from ai_assistant.contracts import (
     StepResult,
     TurnInput,
 )
+from ai_assistant.contracts.errors import ErrorCode
+from ai_assistant.contracts.route_decision import CapabilityName
 
 _SHA256_HEX_LENGTH = 64
 
@@ -119,6 +120,11 @@ class CapabilityInvocation:
 
         _require_same(self.query_analysis.request_id, request_id, "query analysis request_id")
         _require_same(
+            self.query_analysis.message_id,
+            runtime.turn_input.message_id,
+            "query analysis message_id",
+        )
+        _require_same(
             self.query_analysis.runtime_snapshot_id,
             snapshot_id,
             "query analysis runtime_snapshot_id",
@@ -214,8 +220,9 @@ class EvidenceMaterializationRequest:
             raise ValueError("execution plan authorization_decision_id must match authorization")
         if self.execution_plan.runtime_snapshot_id != snapshot_id:
             raise ValueError("execution plan runtime_snapshot_id must match runtime context")
-        plan_step_ids = {step.step_id for step in self.execution_plan.steps}
+        plan_steps = {step.step_id: step for step in self.execution_plan.steps}
         result_ids: set[object] = set()
+        result_step_ids: set[str] = set()
         for result in self.step_results:
             if result.result_id in result_ids:
                 raise ValueError("step result IDs must be unique")
@@ -228,8 +235,16 @@ class EvidenceMaterializationRequest:
                 raise ValueError("step result runtime_snapshot_id must match runtime context")
             if str(result.correlation_id) != correlation_id:
                 raise ValueError("step result correlation_id must match runtime context")
-            if result.step_id not in plan_step_ids:
+            plan_step = plan_steps.get(result.step_id)
+            if plan_step is None:
                 raise ValueError("step result must refer to a step present in execution_plan")
+            if result.step_id in result_step_ids:
+                raise ValueError("only one step result is permitted per plan step")
+            result_step_ids.add(result.step_id)
+            if result.provenance.capability != plan_step.capability:
+                raise ValueError("step result capability must match the plan step")
+            if result.provenance.operation != plan_step.operation:
+                raise ValueError("step result operation must match the plan step")
 
 
 @dataclass(frozen=True, slots=True)
@@ -285,6 +300,10 @@ class IdempotencyAcquireResult:
     outcome: TerminalOutcome | None = None
 
     def __post_init__(self) -> None:
+        if not isinstance(self.status, IdempotencyAcquireStatus):
+            raise ValueError("status must be an IdempotencyAcquireStatus")
+        if self.outcome is not None and not isinstance(self.outcome, (FinalAnswer, ErrorEnvelope)):
+            raise ValueError("outcome must be a FinalAnswer or ErrorEnvelope")
         has_lease = self.lease is not None
         has_outcome = self.outcome is not None
         valid = {
@@ -331,6 +350,14 @@ class RuntimeTelemetryRecord:
     duration_ms: int | None = None
 
     def __post_init__(self) -> None:
+        if not isinstance(self.event_name, RuntimeTelemetryEventName):
+            raise ValueError("event_name must be a RuntimeTelemetryEventName")
+        if self.outcome is not None and not isinstance(self.outcome, RuntimeTelemetryOutcome):
+            raise ValueError("outcome must be a RuntimeTelemetryOutcome")
+        if self.capability is not None and self.capability not in get_args(CapabilityName):
+            raise ValueError("capability must be a legal CapabilityName")
+        if self.error_code is not None and self.error_code not in get_args(ErrorCode):
+            raise ValueError("error_code must be a legal ErrorCode")
         _require_aware(self.occurred_at, "occurred_at")
         for name, value in (
             ("request_id", self.request_id),
