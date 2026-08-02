@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from hypothesis import given
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from ai_assistant.contracts import (
@@ -42,12 +42,20 @@ from ai_assistant.core.types import (
     RuntimeTelemetryEventName,
     RuntimeTelemetryOutcome,
     RuntimeTelemetryRecord,
+    TerminalOutcome,
 )
 
 NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
+NAIVE_NOW = datetime(2026, 1, 1, 12, 0)
 IDS = [UUID(f"{index:08d}-0000-4000-8000-000000000000") for index in range(1, 40)]
 DIGEST = "sha256:" + "a" * 64
 HEX_DIGEST = "a" * 64
+HEX_ALPHABET = "0123456789abcdef"
+IDENTIFIER_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789-"
+CAPABILITY = "rule_evaluator"
+OPERATION = "rule.evaluate"
+FIRST_STEP_ID = "step.answer"
+SECOND_STEP_ID = "step.support"
 
 
 def turn_input(request_id: UUID = IDS[0], message_id: UUID = IDS[1]) -> TurnInput:
@@ -166,7 +174,7 @@ def route_decision(
     query_id: UUID = IDS[9],
     authorization_id: UUID = IDS[8],
     snapshot_id: UUID = IDS[7],
-    capability: str = "rule_evaluator",
+    capability: str = CAPABILITY,
 ) -> RouteDecision:
     return RouteDecision(
         decision_id=decision_id,
@@ -200,11 +208,11 @@ def plan(
     route_id: UUID = IDS[10],
     authorization_id: UUID = IDS[8],
     snapshot_id: UUID = IDS[7],
-    capability: str = "rule_evaluator",
-    operation: str = "rule.evaluate",
+    capability: str = CAPABILITY,
+    operation: str = OPERATION,
 ) -> ExecutionPlan:
     step = PlanStep(
-        step_id="step.answer",
+        step_id=FIRST_STEP_ID,
         capability=capability,
         operation=operation,
         produces=(PlanFactSpec(fact_id="fact.answer", value_type="answer", data_scope="general"),),
@@ -222,7 +230,7 @@ def plan(
         allowed_capabilities=(capability,),
         required_facts=("fact.answer",),
         steps=(step,),
-        parallel_groups=(PlanParallelGroup(group_id="group.1", step_ids=("step.answer",)),),
+        parallel_groups=(PlanParallelGroup(group_id="group.1", step_ids=(FIRST_STEP_ID,)),),
         composition_type="single",
         success_condition="all_required_facts",
         missing_evidence_policy="abstain",
@@ -232,15 +240,62 @@ def plan(
     )
 
 
+def two_step_plan() -> ExecutionPlan:
+    first = PlanStep(
+        step_id=FIRST_STEP_ID,
+        capability=CAPABILITY,
+        operation=OPERATION,
+        produces=(PlanFactSpec(fact_id="fact.answer", value_type="answer", data_scope="general"),),
+        required=True,
+    )
+    second = PlanStep(
+        step_id=SECOND_STEP_ID,
+        capability=CAPABILITY,
+        operation=OPERATION,
+        produces=(PlanFactSpec(fact_id="fact.support", value_type="answer", data_scope="general"),),
+        required=True,
+    )
+    return ExecutionPlan(
+        plan_id=IDS[11],
+        request_id=IDS[0],
+        route_decision_id=IDS[10],
+        authorization_decision_id=IDS[8],
+        runtime_snapshot_id=IDS[7],
+        planned_at=NOW,
+        lane="composite",
+        goal="answer.factual",
+        allowed_capabilities=(CAPABILITY,),
+        required_facts=("fact.answer", "fact.support"),
+        steps=(first, second),
+        parallel_groups=(
+            PlanParallelGroup(group_id="group.1", step_ids=(FIRST_STEP_ID, SECOND_STEP_ID)),
+        ),
+        composition_type="aggregate",
+        success_condition="all_required_facts",
+        missing_evidence_policy="abstain",
+        budget=RouteBudget(
+            max_steps=2,
+            max_parallel_steps=2,
+            max_replans=0,
+            max_retrieval_retries=0,
+            max_analytics_repairs=0,
+            max_answer_repairs=0,
+        ),
+        revision=0,
+        plan_builder_version="1.0.0",
+    )
+
+
 def step_result(
     result_id: UUID = IDS[12],
     request_id: UUID = IDS[0],
     plan_id: UUID = IDS[11],
-    step_id: str = "step.answer",
+    step_id: str = FIRST_STEP_ID,
     snapshot_id: UUID = IDS[7],
     correlation_id: UUID = IDS[14],
-    capability: str = "rule_evaluator",
-    operation: str = "rule.evaluate",
+    capability: str = CAPABILITY,
+    operation: str = OPERATION,
+    fact_id: str = "fact.answer",
 ) -> StepResult:
     return StepResult(
         result_id=result_id,
@@ -253,7 +308,7 @@ def step_result(
         status="success",
         typed_outputs=(
             StepTypedOutputRef(
-                fact_id="fact.answer",
+                fact_id=fact_id,
                 value_type="answer",
                 data_scope="general",
                 schema_ref="schema:answer",
@@ -285,6 +340,57 @@ def error_envelope() -> ErrorEnvelope:
     )
 
 
+def idempotency_key(
+    deployment_id: str = "deployment",
+    principal_id: str = "principal",
+    client_key: str = "client",
+    runtime_snapshot_id: str = "snapshot",
+    runtime_snapshot_digest: str = DIGEST,
+) -> EffectiveIdempotencyKey:
+    return EffectiveIdempotencyKey(
+        deployment_id,
+        principal_id,
+        client_key,
+        runtime_snapshot_id,
+        runtime_snapshot_digest,
+    )
+
+
+def idempotency_lease(lease_id: str = "lease") -> IdempotencyLease:
+    return IdempotencyLease(lease_id, idempotency_key(), HEX_DIGEST)
+
+
+def telemetry_optional_ids(
+    authorization_decision_id: str | None = None,
+    plan_id: str | None = None,
+    step_id: str | None = None,
+) -> RuntimeTelemetryRecord:
+    return RuntimeTelemetryRecord(
+        RuntimeTelemetryEventName.RUNTIME_STARTED,
+        NOW,
+        "request",
+        "correlation",
+        "snapshot",
+        authorization_decision_id=authorization_decision_id,
+        plan_id=plan_id,
+        step_id=step_id,
+    )
+
+
+def telemetry_required_ids(
+    request_id: str = "request",
+    correlation_id: str = "correlation",
+    runtime_snapshot_id: str = "snapshot",
+) -> RuntimeTelemetryRecord:
+    return RuntimeTelemetryRecord(
+        RuntimeTelemetryEventName.RUNTIME_STARTED,
+        NOW,
+        request_id,
+        correlation_id,
+        runtime_snapshot_id,
+    )
+
+
 def test_private_dataclasses_are_frozen_slotted_and_reject_real_field_assignment() -> None:
     values = [
         runtime_context(),
@@ -308,27 +414,44 @@ def test_private_dataclasses_are_frozen_slotted_and_reject_real_field_assignment
             setattr(value, declared_field.name, getattr(value, declared_field.name))
 
 
-def test_runtime_context_time_and_correlation_invariants() -> None:
-    assert runtime_context(deadline_at=NOW + timedelta(seconds=1)).deadline_at is not None
-    cases = (
-        (" ", NOW, None),
-        ("c", datetime(2026, 1, 1, 12), None),
-        ("c", NOW, datetime(2026, 1, 1, 12)),
-        ("c", NOW, NOW - timedelta(seconds=1)),
-        ("c", NOW, NOW + timedelta(seconds=1)),
-    )
-    for correlation, started, deadline in cases[:-1]:
-        with pytest.raises(ValueError):
-            runtime_context(correlation, started, deadline)
+def test_runtime_context_rejects_blank_correlation_id() -> None:
+    with pytest.raises(ValueError, match="correlation_id must be non-empty"):
+        runtime_context(correlation_id=" ")
+
+
+def test_runtime_context_rejects_naive_started_at() -> None:
+    with pytest.raises(ValueError, match="started_at must be timezone-aware"):
+        runtime_context(started_at=NAIVE_NOW)
+
+
+def test_runtime_context_rejects_naive_deadline_at() -> None:
+    with pytest.raises(ValueError, match="deadline_at must be timezone-aware"):
+        runtime_context(started_at=NOW, deadline_at=NAIVE_NOW)
+
+
+def test_runtime_context_rejects_deadline_earlier_than_started_at() -> None:
+    with pytest.raises(ValueError, match="deadline_at must be later than started_at"):
+        runtime_context(started_at=NOW, deadline_at=NOW - timedelta(seconds=1))
+
+
+def test_runtime_context_rejects_deadline_equal_to_started_at() -> None:
+    with pytest.raises(ValueError, match="deadline_at must be later than started_at"):
+        runtime_context(started_at=NOW, deadline_at=NOW)
+
+
+def test_runtime_context_accepts_deadline_later_than_started_at() -> None:
+    context = runtime_context(started_at=NOW, deadline_at=NOW + timedelta(seconds=1))
+    assert context.deadline_at == NOW + timedelta(seconds=1)
+    assert context.started_at == NOW
 
 
 def test_authorized_context_validates_authorization_bindings() -> None:
     assert authorized_context().authorization.effect == "allow"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="authorization must allow the operation"):
         authorized_context(auth=authorization(effect="deny"))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="authorization request_id and turn request_id"):
         authorized_context(auth=authorization(request_id=IDS[13]))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="security_context_id"):
         authorized_context(auth=authorization(context_id=IDS[13]))
 
 
@@ -363,7 +486,7 @@ def test_capability_invocation_validates_each_artifact_binding() -> None:
     for case in cases:
         with pytest.raises(ValueError):
             valid(**case)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="step must belong to execution_plan"):
         CapabilityInvocation(
             authorized_context(),
             query_analysis(),
@@ -371,8 +494,8 @@ def test_capability_invocation_validates_each_artifact_binding() -> None:
             plan(),
             PlanStep(
                 step_id="other",
-                capability="rule_evaluator",
-                operation="rule.evaluate",
+                capability=CAPABILITY,
+                operation=OPERATION,
                 produces=(
                     PlanFactSpec(fact_id="fact.other", value_type="answer", data_scope="general"),
                 ),
@@ -381,80 +504,205 @@ def test_capability_invocation_validates_each_artifact_binding() -> None:
         )
 
 
-def test_evidence_materialization_validates_bindings_and_provenance() -> None:
+def test_evidence_materialization_accepts_valid_single_result() -> None:
+    request = EvidenceMaterializationRequest(
+        authorized_context(), route_decision(), plan(), (step_result(),)
+    )
+    assert len(request.step_results) == 1
+
+
+@pytest.mark.parametrize(
+    ("results", "message"),
+    [
+        ((), "step_results must be non-empty"),
+        (
+            (step_result(request_id=IDS[13]),),
+            "step result request_id must match runtime context",
+        ),
+        ((step_result(plan_id=IDS[13]),), "step result plan_id must match execution plan"),
+        (
+            (step_result(snapshot_id=IDS[13]),),
+            "step result runtime_snapshot_id must match runtime context",
+        ),
+        (
+            (step_result(correlation_id=IDS[15]),),
+            "step result correlation_id must match runtime context",
+        ),
+        (
+            (step_result(step_id="unknown"),),
+            "step result must refer to a step present in execution_plan",
+        ),
+        (
+            (step_result(capability="document_retrieval"),),
+            "step result capability must match the plan step",
+        ),
+        (
+            (step_result(operation="rule.other"),),
+            "step result operation must match the plan step",
+        ),
+    ],
+)
+def test_evidence_materialization_rejects_invalid_lineage(
+    results: tuple[StepResult, ...], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        EvidenceMaterializationRequest(authorized_context(), route_decision(), plan(), results)
+
+
+def test_evidence_materialization_rejects_duplicate_result_ids() -> None:
     context = authorized_context()
-    valid = EvidenceMaterializationRequest(context, route_decision(), plan(), (step_result(),))
-    assert valid.step_results
-    cases = (
-        (),
-        (step_result(request_id=IDS[13]),),
-        (step_result(plan_id=IDS[13]),),
-        (step_result(snapshot_id=IDS[13]),),
-        (step_result(correlation_id=IDS[15]),),
-        (step_result(step_id="unknown"),),
-        (step_result(), step_result(result_id=IDS[13])),
-        (step_result(), step_result(result_id=IDS[13], capability="rule_evaluator")),
-        (step_result(capability="document_retrieval"),),
-        (step_result(operation="rule.other"),),
-    )
-    for results in cases:
-        with pytest.raises(ValueError):
-            EvidenceMaterializationRequest(context, route_decision(), plan(), results)
+    route = route_decision()
+    execution_plan = two_step_plan()
+    first = step_result(result_id=IDS[12], step_id=FIRST_STEP_ID, fact_id="fact.answer")
+    second = step_result(result_id=IDS[12], step_id=SECOND_STEP_ID, fact_id="fact.support")
+
+    assert first.result_id == second.result_id
+    assert first.step_id != second.step_id
+    assert EvidenceMaterializationRequest(context, route, execution_plan, (first,)).step_results
+    assert EvidenceMaterializationRequest(context, route, execution_plan, (second,)).step_results
+
+    with pytest.raises(ValueError, match="step result IDs must be unique"):
+        EvidenceMaterializationRequest(context, route, execution_plan, (first, second))
 
 
-def test_idempotency_result_state_matrix_and_closed_values() -> None:
-    key = EffectiveIdempotencyKey("d", "p", "c", "s", DIGEST)
-    lease = IdempotencyLease("lease", key, HEX_DIGEST)
+def test_evidence_materialization_rejects_two_results_for_one_step() -> None:
+    context = authorized_context()
+    route = route_decision()
+    execution_plan = two_step_plan()
+    first = step_result(result_id=IDS[12], step_id=FIRST_STEP_ID, fact_id="fact.answer")
+    second = step_result(result_id=IDS[13], step_id=FIRST_STEP_ID, fact_id="fact.answer")
+
+    assert first.result_id != second.result_id
+    assert first.step_id == second.step_id
+    assert EvidenceMaterializationRequest(context, route, execution_plan, (first,)).step_results
+    assert EvidenceMaterializationRequest(context, route, execution_plan, (second,)).step_results
+
+    with pytest.raises(ValueError, match="only one step result is permitted per plan step"):
+        EvidenceMaterializationRequest(context, route, execution_plan, (first, second))
+
+
+VALID_IDEMPOTENCY_STATES: dict[IdempotencyAcquireStatus, tuple[bool, bool]] = {
+    IdempotencyAcquireStatus.ACQUIRED: (True, False),
+    IdempotencyAcquireStatus.REPLAY: (False, True),
+    IdempotencyAcquireStatus.IN_FLIGHT: (False, False),
+    IdempotencyAcquireStatus.CONFLICT: (False, False),
+}
+
+IDEMPOTENCY_STATE_MATRIX: tuple[tuple[IdempotencyAcquireStatus, bool, bool], ...] = tuple(
+    (status, with_lease, with_outcome)
+    for status in IdempotencyAcquireStatus
+    for with_lease in (False, True)
+    for with_outcome in (False, True)
+)
+
+
+def test_idempotency_state_matrix_is_exhaustive() -> None:
+    assert len(IDEMPOTENCY_STATE_MATRIX) == 16
+    assert len(set(IDEMPOTENCY_STATE_MATRIX)) == 16
+    assert set(VALID_IDEMPOTENCY_STATES) == set(IdempotencyAcquireStatus)
+
+
+@pytest.mark.parametrize(("status", "with_lease", "with_outcome"), IDEMPOTENCY_STATE_MATRIX)
+def test_idempotency_result_state_matrix(
+    status: IdempotencyAcquireStatus, with_lease: bool, with_outcome: bool
+) -> None:
+    lease: IdempotencyLease | None = idempotency_lease() if with_lease else None
+    outcome: TerminalOutcome | None = error_envelope() if with_outcome else None
+    if VALID_IDEMPOTENCY_STATES[status] == (with_lease, with_outcome):
+        result = IdempotencyAcquireResult(status, lease, outcome)
+        assert result.status is status
+        assert (result.lease is not None) is with_lease
+        assert (result.outcome is not None) is with_outcome
+    else:
+        with pytest.raises(ValueError, match="idempotency result state does not match status"):
+            IdempotencyAcquireResult(status, lease, outcome)
+
+
+def test_idempotency_result_rejects_raw_string_status() -> None:
+    with pytest.raises(ValueError, match="status must be an IdempotencyAcquireStatus"):
+        IdempotencyAcquireResult("replay", outcome=error_envelope())  # type: ignore[arg-type]
+
+
+def test_idempotency_result_rejects_arbitrary_outcome_object() -> None:
+    with pytest.raises(ValueError, match="outcome must be a FinalAnswer or ErrorEnvelope"):
+        IdempotencyAcquireResult(
+            IdempotencyAcquireStatus.REPLAY,
+            outcome=object(),  # type: ignore[arg-type]
+        )
+
+
+def test_idempotency_result_accepts_error_envelope_replay_outcome() -> None:
     outcome = error_envelope()
-    valid = (
-        IdempotencyAcquireResult(IdempotencyAcquireStatus.ACQUIRED, lease=lease),
-        IdempotencyAcquireResult(IdempotencyAcquireStatus.REPLAY, outcome=outcome),
-        IdempotencyAcquireResult(IdempotencyAcquireStatus.IN_FLIGHT),
-        IdempotencyAcquireResult(IdempotencyAcquireStatus.CONFLICT),
-    )
-    assert len(valid) == 4
-    for status in IdempotencyAcquireStatus:
-        for invalid_lease, invalid_outcome in ((lease, None), (None, outcome), (lease, outcome)):
-            if (
-                status == IdempotencyAcquireStatus.ACQUIRED
-                and invalid_lease is lease
-                and invalid_outcome is None
-            ) or (
-                status == IdempotencyAcquireStatus.REPLAY
-                and invalid_lease is None
-                and invalid_outcome is outcome
-            ):
-                continue
-            with pytest.raises(ValueError):
-                IdempotencyAcquireResult(status, invalid_lease, invalid_outcome)
-    with pytest.raises(ValueError):
-        IdempotencyAcquireResult("replay", outcome=outcome)  # type: ignore[arg-type]
-    with pytest.raises(ValueError):
-        IdempotencyAcquireResult(IdempotencyAcquireStatus.REPLAY, outcome=object())  # type: ignore[arg-type]
-    with pytest.raises(ValueError):
-        IdempotencyLease("lease", key, "A" * 64)
-    with pytest.raises(ValueError):
-        EffectiveIdempotencyKey("d", "p", "c", "s", "sha256:" + "A" * 64)
-    assert hash(key) == hash(key)
+    result = IdempotencyAcquireResult(IdempotencyAcquireStatus.REPLAY, outcome=outcome)
+    assert result.outcome is outcome
+    assert result.lease is None
 
 
-@pytest.mark.parametrize("component", range(5))
-@given(st.text(alphabet="0123456789abcdef", min_size=1, max_size=12))
-def test_idempotency_key_hash_and_equality_isolation(component: int, value: str) -> None:
-    base = ["deployment", "principal", "client", "snapshot", DIGEST]
-    changed = base.copy()
-    changed[component] = value if component < 4 else "sha256:" + (value + "a" * 64)[:64]
-    if changed == base:
-        changed[component] = "other" if component < 4 else "sha256:" + "b" * 64
-    left = EffectiveIdempotencyKey(*base)
-    right = EffectiveIdempotencyKey(*changed)
+def test_idempotency_lease_and_key_reject_non_lowercase_digests() -> None:
+    with pytest.raises(ValueError, match="request_fingerprint must be a lowercase SHA-256 digest"):
+        IdempotencyLease("lease", idempotency_key(), "A" * 64)
+    with pytest.raises(
+        ValueError, match="runtime_snapshot_digest must be a lowercase SHA-256 digest"
+    ):
+        idempotency_key(runtime_snapshot_digest="sha256:" + "A" * 64)
+
+
+@pytest.mark.parametrize(
+    "field_name", ["deployment_id", "principal_id", "client_key", "runtime_snapshot_id"]
+)
+def test_idempotency_key_rejects_blank_identifiers(field_name: str) -> None:
+    with pytest.raises(ValueError, match=f"{field_name} must be non-empty"):
+        idempotency_key(**{field_name: " "})
+
+
+def test_idempotency_key_hash_is_stable_for_equal_values() -> None:
+    assert idempotency_key() == idempotency_key()
+    assert hash(idempotency_key()) == hash(idempotency_key())
+
+
+KEY_COMPONENTS = (
+    "deployment_id",
+    "principal_id",
+    "client_key",
+    "runtime_snapshot_id",
+    "runtime_snapshot_digest",
+)
+
+
+def _as_snapshot_digest(hex_value: str) -> str:
+    return "sha256:" + hex_value
+
+
+identifier_values = st.text(alphabet=IDENTIFIER_ALPHABET, min_size=1, max_size=12)
+digest_values = st.text(alphabet=HEX_ALPHABET, min_size=64, max_size=64).map(_as_snapshot_digest)
+
+
+@settings(max_examples=50, deadline=None)
+@given(
+    component=st.sampled_from(KEY_COMPONENTS),
+    identifier=identifier_values,
+    digest=digest_values,
+)
+def test_idempotency_key_component_isolation(component: str, identifier: str, digest: str) -> None:
+    left = idempotency_key()
+    replacement = digest if component == "runtime_snapshot_digest" else identifier
+    assume(replacement != getattr(left, component))
+    right = idempotency_key(**{component: replacement})
+
     assert left != right
-    assert hash(left) != hash(right)
+    assert isinstance(hash(left), int)
+    assert isinstance(hash(right), int)
+    assert len({left, right}) == 2
+
+    mapping = {left: "left", right: "right"}
+    assert mapping[left] == "left"
+    assert mapping[right] == "right"
+    assert len(mapping) == 2
 
 
-def test_telemetry_validation_is_closed_and_safe() -> None:
-    assert RuntimeTelemetryRecord(RuntimeTelemetryEventName.RUNTIME_STARTED, NOW, "r", "c", "s")
-    assert RuntimeTelemetryRecord(
+def test_telemetry_accepts_valid_lifecycle_records() -> None:
+    started = RuntimeTelemetryRecord(RuntimeTelemetryEventName.RUNTIME_STARTED, NOW, "r", "c", "s")
+    completed = RuntimeTelemetryRecord(
         RuntimeTelemetryEventName.RUNTIME_COMPLETED,
         NOW,
         "r",
@@ -462,45 +710,108 @@ def test_telemetry_validation_is_closed_and_safe() -> None:
         "s",
         outcome=RuntimeTelemetryOutcome.ANSWERED,
     )
-    assert RuntimeTelemetryRecord(
+    failed = RuntimeTelemetryRecord(
         RuntimeTelemetryEventName.RUNTIME_FAILED, NOW, "r", "c", "s", error_code="INTERNAL_ERROR"
     )
-    invalid = (
-        (datetime(2026, 1, 1, 12), "r", "c", "s"),
-        (NOW, " ", "c", "s"),
-        (NOW, "r", " ", "s"),
-        (NOW, "r", "c", " "),
-    )
-    for timestamp, request, correlation, snapshot_id in invalid:
-        with pytest.raises(ValueError):
-            RuntimeTelemetryRecord(
-                RuntimeTelemetryEventName.RUNTIME_STARTED,
-                timestamp,
-                request,
-                correlation,
-                snapshot_id,
-            )
-    for kwargs in (
-        {"duration_ms": -1},
-        {"event_name": RuntimeTelemetryEventName.RUNTIME_FAILED},
-        {"event_name": RuntimeTelemetryEventName.RUNTIME_STARTED, "error_code": "INTERNAL_ERROR"},
-        {"event_name": RuntimeTelemetryEventName.RUNTIME_COMPLETED},
-        {"event_name": "runtime_started"},
-        {"outcome": "answered"},
-        {"capability": "unknown"},
-        {"error_code": "UNKNOWN"},
-        {"authorization_decision_id": " "},
-    ):
-        values = {
-            "event_name": RuntimeTelemetryEventName.RUNTIME_STARTED,
-            "occurred_at": NOW,
-            "request_id": "r",
-            "correlation_id": "c",
-            "runtime_snapshot_id": "s",
-        }
-        values.update(kwargs)
-        with pytest.raises(ValueError):
-            RuntimeTelemetryRecord(**values)  # type: ignore[arg-type]
+    assert started.event_name is RuntimeTelemetryEventName.RUNTIME_STARTED
+    assert completed.outcome is RuntimeTelemetryOutcome.ANSWERED
+    assert failed.error_code == "INTERNAL_ERROR"
+
+
+def test_telemetry_rejects_naive_timestamp() -> None:
+    with pytest.raises(ValueError, match="occurred_at must be timezone-aware"):
+        RuntimeTelemetryRecord(RuntimeTelemetryEventName.RUNTIME_STARTED, NAIVE_NOW, "r", "c", "s")
+
+
+def test_telemetry_rejects_negative_duration() -> None:
+    with pytest.raises(ValueError, match="duration_ms must be non-negative"):
+        RuntimeTelemetryRecord(
+            RuntimeTelemetryEventName.RUNTIME_STARTED, NOW, "r", "c", "s", duration_ms=-1
+        )
+
+
+@pytest.mark.parametrize("field_name", ["request_id", "correlation_id", "runtime_snapshot_id"])
+def test_telemetry_rejects_blank_required_ids(field_name: str) -> None:
+    with pytest.raises(ValueError, match=f"{field_name} must be non-empty"):
+        telemetry_required_ids(**{field_name: " "})
+
+
+@pytest.mark.parametrize("field_name", ["authorization_decision_id", "plan_id", "step_id"])
+def test_telemetry_rejects_blank_optional_ids(field_name: str) -> None:
+    with pytest.raises(ValueError, match=f"{field_name} must be non-empty"):
+        telemetry_optional_ids(**{field_name: " "})
+
+
+@pytest.mark.parametrize("field_name", ["authorization_decision_id", "plan_id", "step_id"])
+def test_telemetry_accepts_populated_optional_ids(field_name: str) -> None:
+    record = telemetry_optional_ids(**{field_name: "value"})
+    assert getattr(record, field_name) == "value"
+
+
+def test_telemetry_failed_event_requires_error_code() -> None:
+    with pytest.raises(ValueError, match="runtime_failed requires an error_code"):
+        RuntimeTelemetryRecord(RuntimeTelemetryEventName.RUNTIME_FAILED, NOW, "r", "c", "s")
+
+
+def test_telemetry_non_failure_event_rejects_error_code() -> None:
+    with pytest.raises(ValueError, match="non-failure events must not carry an error_code"):
+        RuntimeTelemetryRecord(
+            RuntimeTelemetryEventName.RUNTIME_STARTED,
+            NOW,
+            "r",
+            "c",
+            "s",
+            error_code="INTERNAL_ERROR",
+        )
+
+
+def test_telemetry_completed_event_requires_outcome() -> None:
+    with pytest.raises(ValueError, match="runtime_completed requires an outcome"):
+        RuntimeTelemetryRecord(RuntimeTelemetryEventName.RUNTIME_COMPLETED, NOW, "r", "c", "s")
+
+
+def test_telemetry_rejects_raw_string_event_name() -> None:
+    with pytest.raises(ValueError, match="event_name must be a RuntimeTelemetryEventName"):
+        RuntimeTelemetryRecord("runtime_started", NOW, "r", "c", "s")  # type: ignore[arg-type]
+
+
+def test_telemetry_rejects_raw_string_outcome() -> None:
+    with pytest.raises(ValueError, match="outcome must be a RuntimeTelemetryOutcome"):
+        RuntimeTelemetryRecord(
+            RuntimeTelemetryEventName.RUNTIME_COMPLETED,
+            NOW,
+            "r",
+            "c",
+            "s",
+            outcome="answered",  # type: ignore[arg-type]
+        )
+
+
+def test_telemetry_rejects_unknown_capability() -> None:
+    with pytest.raises(ValueError, match="capability must be a legal CapabilityName"):
+        RuntimeTelemetryRecord(
+            RuntimeTelemetryEventName.RUNTIME_STARTED,
+            NOW,
+            "r",
+            "c",
+            "s",
+            capability="unknown",  # type: ignore[arg-type]
+        )
+
+
+def test_telemetry_rejects_unknown_error_code() -> None:
+    with pytest.raises(ValueError, match="error_code must be a legal ErrorCode"):
+        RuntimeTelemetryRecord(
+            RuntimeTelemetryEventName.RUNTIME_FAILED,
+            NOW,
+            "r",
+            "c",
+            "s",
+            error_code="UNKNOWN",  # type: ignore[arg-type]
+        )
+
+
+def test_telemetry_record_declares_no_content_bearing_fields() -> None:
     assert not {field.name for field in fields(RuntimeTelemetryRecord)}.intersection(
         {
             "raw_message",
