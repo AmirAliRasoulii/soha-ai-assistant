@@ -17,3 +17,6 @@ Thumbs.db
 .coverage.*
 coverage.xml
 htmlcov/
+
+# Local Claude Code state
+.claude/
