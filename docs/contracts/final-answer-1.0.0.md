@@ -273,9 +273,32 @@ contract never sorts, deduplicates, or normalizes a collection on the caller's b
 
 ## 31. Compatibility
 
-Version 1.0.0 is additive-only within the 1.x line. Adding a new outcome, a new generation mode, a
-new freshness status, a new item kind, or a new required field is a breaking change that requires a
-new schema version and a new schema identifier.
+FinalAnswer 1.0.0 is closed and becomes immutable after approval.
+
+PATCH changes must not alter the set of accepted payloads, validation behavior, serialized payload
+shape, defaults, ordering, trust semantics, security semantics, or terminal-outcome semantics. A
+PATCH release may correct documentation, tests, or internal comments only.
+
+Adding, removing, or renaming a field requires a new major version.
+
+Adding or changing a terminal outcome, generation mode, content-validation status, freshness
+status, item kind, discriminator, required field, default, constraint, cross-field invariant, count
+definition, budget rule, citation rule, safe-error rule, AnswerPlan binding rule, EvidenceBundle
+binding rule, privacy rule, or trust-boundary rule requires a new major version.
+
+Adding a value to a closed Literal or enum is a breaking change for 1.0.0 and requires a new major
+version. Every literal catalog in this contract is closed, including the terminal outcomes,
+generation modes, content-validation statuses, freshness statuses, item kinds, citation target
+kinds, and citation placements.
+
+Controlled values that are represented as validated canonical strings, such as organization-managed
+reason codes or section types, may evolve only within their already-declared structural
+constraints and must not change the meaning of an existing accepted payload.
+
+A new major version requires a new schema version and a new schema identifier; it never reuses
+`urn:ai-assistant:contracts:final-answer:1.0.0`.
+
+FinalAnswer 1.0.0 is immutable after approval.
 
 ## 32. JSON Schema artifact
 

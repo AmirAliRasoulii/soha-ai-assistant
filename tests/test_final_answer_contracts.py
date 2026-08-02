@@ -348,6 +348,55 @@ def multi_claim_payload(section_count: int, claims_per_section: int = 1) -> Payl
     return recount(payload)
 
 
+COUNT_BUDGET_MUTATIONS = (
+    "section_count",
+    "claim_count",
+    "caveat_count",
+    "citation_count",
+    "character_count",
+    "max_sections",
+    "max_claims",
+    "max_caveats",
+    "max_citations",
+    "max_characters",
+)
+
+
+def generated_payload(
+    section_count: int,
+    claim_count: int,
+    caveat_count: int,
+    source_count: int,
+    text_length: int,
+) -> Payload:
+    """Build an answered payload with the requested bounded shape and one citation per claim."""
+    text = "t" * text_length
+    items: list[Payload] = [claim_item(f"claim.item-{index}", text) for index in range(claim_count)]
+    items += [caveat_item(f"caveat.item-{index}", text) for index in range(caveat_count)]
+    minimum_sections = -(-len(items) // 8)
+    used_sections = min(max(section_count, minimum_sections), len(items), 4)
+    buckets: list[list[Payload]] = [[] for _ in range(used_sections)]
+    for position, item in enumerate(items):
+        buckets[position % used_sections].append(item)
+    payload = answered_payload()
+    payload["validated_content"] = {
+        "sections": [
+            section_payload(f"section.s{index}", "summary", bucket)
+            for index, bucket in enumerate(buckets)
+        ]
+    }
+    payload["citations"] = [
+        citation_payload(
+            index=3000 + index,
+            slot_id=f"slot.item-{index}",
+            target_id=f"claim.item-{index}",
+            sources=[source_payload(4000 + index * 8 + offset) for offset in range(source_count)],
+        )
+        for index in range(claim_count)
+    ]
+    return payload
+
+
 class FinalAnswerTestCase(unittest.TestCase):
     """Shared helpers for building and rejecting FinalAnswer payloads."""
 
@@ -2003,48 +2052,115 @@ class DocumentationExampleTests(FinalAnswerTestCase):
         self.assertEqual(len(outcomes), 5)
 
 
-class FinalAnswerPropertyTests(FinalAnswerTestCase):
-    """Bounded property tests for order, round-trips, duplicates, and closure."""
+class CompatibilityPolicyTests(FinalAnswerTestCase):
+    """The specification declares a closed and immutable 1.0.0 compatibility policy."""
 
-    @given(section_count=st.integers(1, 4), claims_per_section=st.integers(1, 3))
-    def test_generated_order_is_preserved(
-        self, section_count: int, claims_per_section: int
+    def _normalized_document(self) -> str:
+        with open("docs/contracts/final-answer-1.0.0.md", encoding="utf-8") as handle:
+            return " ".join(handle.read().split())
+
+    def test_document_declares_closed_immutable_compatibility(self) -> None:
+        document = self._normalized_document()
+        self.assertIn("FinalAnswer 1.0.0 is closed and becomes immutable after approval.", document)
+        self.assertIn("FinalAnswer 1.0.0 is immutable after approval.", document)
+
+    def test_document_restricts_patch_changes(self) -> None:
+        self.assertIn(
+            "PATCH changes must not alter the set of accepted payloads, validation behavior, "
+            "serialized payload shape, defaults, ordering, trust semantics, security semantics, "
+            "or terminal-outcome semantics.",
+            self._normalized_document(),
+        )
+
+    def test_document_requires_a_major_version_for_field_changes(self) -> None:
+        self.assertIn(
+            "Adding, removing, or renaming a field requires a new major version.",
+            self._normalized_document(),
+        )
+
+    def test_document_requires_a_major_version_for_outcome_and_trust_changes(self) -> None:
+        self.assertIn(
+            "Adding or changing a terminal outcome, generation mode, content-validation status, "
+            "freshness status, item kind, discriminator, required field, default, constraint, "
+            "cross-field invariant, count definition, budget rule, citation rule, safe-error "
+            "rule, AnswerPlan binding rule, EvidenceBundle binding rule, privacy rule, or "
+            "trust-boundary rule requires a new major version.",
+            self._normalized_document(),
+        )
+
+    def test_document_declares_literal_extension_breaking(self) -> None:
+        self.assertIn(
+            "Adding a value to a closed Literal or enum is a breaking change for 1.0.0 and "
+            "requires a new major version.",
+            self._normalized_document(),
+        )
+
+    def test_document_allows_controlled_values_only_within_declared_constraints(self) -> None:
+        self.assertIn(
+            "may evolve only within their already-declared structural constraints and must not "
+            "change the meaning of an existing accepted payload.",
+            self._normalized_document(),
+        )
+
+    def test_document_does_not_claim_additive_only_compatibility(self) -> None:
+        document = self._normalized_document()
+        forbidden = (
+            "additive-only within 1.x",
+            "additive-only within the 1.x line",
+            "additive-only",
+            "backward-compatible field addition",
+            "optional fields may be added in a minor version",
+            "enum values may be extended in a minor version",
+        )
+        for phrase in forbidden:
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, document)
+
+
+class FinalAnswerPropertyTests(FinalAnswerTestCase):
+    """Bounded property tests for order, round-trips, duplicates, counts, and closure."""
+
+    @given(
+        section_count=st.integers(1, 4),
+        claim_count=st.integers(1, 8),
+        caveat_count=st.integers(0, 8),
+        text_length=st.integers(1, 120),
+    )
+    def test_content_order_and_round_trip(
+        self, section_count: int, claim_count: int, caveat_count: int, text_length: int
     ) -> None:
-        payload = multi_claim_payload(section_count, claims_per_section)
-        expected_sections = [
-            section["section_id"] for section in payload["validated_content"]["sections"]
-        ]
+        payload = recount(
+            generated_payload(section_count, claim_count, caveat_count, 1, text_length)
+        )
+        sections = payload["validated_content"]["sections"]
+        expected_sections = [section["section_id"] for section in sections]
         expected_items = [
-            item["item_id"]
-            for section in payload["validated_content"]["sections"]
+            (item["item_kind"], item["item_id"], item["rendered_text"])
+            for section in sections
             for item in section["items"]
         ]
         expected_slots = [citation["slot_id"] for citation in payload["citations"]]
         answer = self.build(payload)
         actual_sections = [section.section_id for section in answer.validated_content.sections]
         actual_items = [
-            item.item_id for section in answer.validated_content.sections for item in section.items
+            (item.item_kind, item.item_id, item.rendered_text)
+            for section in answer.validated_content.sections
+            for item in section.items
         ]
         actual_slots = [citation.slot_id for citation in answer.citations]
         self.assertEqual(actual_sections, expected_sections)
         self.assertEqual(actual_items, expected_items)
         self.assertEqual(actual_slots, expected_slots)
-
-    @given(
-        section_count=st.integers(1, 4),
-        claims_per_section=st.integers(1, 3),
-        text_length=st.integers(1, 120),
-    )
-    def test_valid_partitions_round_trip_through_json(
-        self, section_count: int, claims_per_section: int, text_length: int
-    ) -> None:
-        payload = multi_claim_payload(section_count, claims_per_section)
-        for section in payload["validated_content"]["sections"]:
-            for item in section["items"]:
-                item["rendered_text"] = "t" * text_length
-        answer = self.build(recount(payload))
+        rendered = [item[2] for item in actual_items]
+        self.assertTrue(all(text == "t" * text_length for text in rendered))
+        self.assertEqual(len(rendered), claim_count + caveat_count)
         restored = FinalAnswer.model_validate_json(answer.model_dump_json())
         self.assertEqual(restored, answer)
+        self.assertEqual(
+            [section.section_id for section in restored.validated_content.sections],
+            expected_sections,
+        )
+        self.assertEqual([citation.slot_id for citation in restored.citations], expected_slots)
 
     @given(
         duplicate_kind=st.sampled_from(["section_item", "global_item", "caveat"]),
@@ -2086,6 +2202,106 @@ class FinalAnswerPropertyTests(FinalAnswerTestCase):
         self.assertTrue(all(citation.target_id in item_ids for citation in answer.citations))
         restored = FinalAnswer.model_validate_json(answer.model_dump_json())
         self.assertEqual(restored, answer)
+
+    @given(
+        section_count=st.integers(1, 4),
+        claim_count=st.integers(1, 8),
+        caveat_count=st.integers(0, 8),
+        source_count=st.integers(1, 8),
+        text_length=st.integers(1, 120),
+        mutation=st.sampled_from(list(COUNT_BUDGET_MUTATIONS)),
+    )
+    def test_generated_counts_and_budgets_are_consistent(
+        self,
+        section_count: int,
+        claim_count: int,
+        caveat_count: int,
+        source_count: int,
+        text_length: int,
+        mutation: str,
+    ) -> None:
+        payload = generated_payload(
+            section_count, claim_count, caveat_count, source_count, text_length
+        )
+        sections = payload["validated_content"]["sections"]
+        items = [item for section in sections for item in section["items"]]
+        section_total = len(sections)
+        claim_total = sum(1 for item in items if item["item_kind"] == "claim")
+        caveat_total = sum(1 for item in items if item["item_kind"] == "caveat")
+        citation_total = len(payload["citations"])
+        character_total = sum(len(item["rendered_text"]) for item in items)
+        payload["response_metadata"] = metadata_payload(
+            section_count=section_total,
+            claim_count=claim_total,
+            caveat_count=caveat_total,
+            citation_count=citation_total,
+            character_count=character_total,
+        )
+        payload["applied_length_budget"] = budget_payload(
+            max_characters=character_total,
+            max_sections=section_total,
+            max_claims=claim_total,
+            max_caveats=caveat_total,
+            max_citations=citation_total,
+        )
+        answer = self.build(payload)
+        metadata = answer.response_metadata
+        self.assertEqual(metadata.section_count, section_total)
+        self.assertEqual(metadata.claim_count, claim_total)
+        self.assertEqual(metadata.caveat_count, caveat_total)
+        self.assertEqual(metadata.citation_count, citation_total)
+        self.assertEqual(
+            metadata.character_count,
+            sum(
+                len(item.rendered_text)
+                for section in answer.validated_content.sections
+                for item in section.items
+            ),
+        )
+        budget = answer.applied_length_budget
+        self.assertGreaterEqual(budget.max_sections, metadata.section_count)
+        self.assertGreaterEqual(budget.max_claims, metadata.claim_count)
+        self.assertGreaterEqual(budget.max_caveats, metadata.caveat_count)
+        self.assertGreaterEqual(budget.max_citations, metadata.citation_count)
+        self.assertGreaterEqual(budget.max_characters, metadata.character_count)
+        restored = FinalAnswer.model_validate_json(answer.model_dump_json())
+        self.assertEqual(restored, answer)
+        broken = copy.deepcopy(payload)
+        broken_metadata = broken["response_metadata"]
+        broken_budget = broken["applied_length_budget"]
+        fallback_claims = claim_total - 1
+        match mutation:
+            case "section_count":
+                broken_metadata["section_count"] = section_total + 1
+            case "claim_count":
+                broken_metadata["claim_count"] = claim_total + 1
+            case "caveat_count":
+                broken_metadata["caveat_count"] = caveat_total + 1
+            case "citation_count":
+                broken_metadata["citation_count"] = citation_total + 1
+            case "character_count":
+                broken_metadata["character_count"] = character_total + 1
+            case "max_sections":
+                if section_total > 1:
+                    broken_budget["max_sections"] = section_total - 1
+                else:
+                    broken_budget["max_claims"] = fallback_claims
+            case "max_claims":
+                broken_budget["max_claims"] = claim_total - 1
+            case "max_caveats":
+                if caveat_total > 0:
+                    broken_budget["max_caveats"] = caveat_total - 1
+                else:
+                    broken_budget["max_claims"] = fallback_claims
+            case "max_citations":
+                broken_budget["max_citations"] = citation_total - 1
+            case _:
+                if character_total > 1:
+                    broken_budget["max_characters"] = character_total - 1
+                else:
+                    broken_budget["max_claims"] = fallback_claims
+        with self.assertRaises(ValidationError):
+            FinalAnswer.model_validate(broken)
 
     @given(
         field_name=st.sampled_from(list(FORBIDDEN_FIELD_NAMES)),
