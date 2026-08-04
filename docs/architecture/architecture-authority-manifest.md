@@ -1,6 +1,6 @@
 # Architecture Authority Manifest
 
-Status: Accepted architecture authority baseline updated by CP-000E; CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged
+Status: Accepted architecture authority baseline; CP-000E accepted at commit `882a2ef`
 Implementation remains owned by the packages identified in this document.
 Scope: document authority, precedence, and supersession. This manifest decides **which document is
 authoritative for which decision**. It creates no architecture decision of its own, and it asserts no
@@ -8,9 +8,9 @@ implementation that Git does not contain.
 
 Base branch: `main`
 Base repository evidence commit: `8d94c6a`
-Latest accepted architecture baseline: CP-000R, accepted at `8d94c6a`. The CP-000E-created ADRs and
-`docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md` do **not** exist at `8d94c6a`.
-CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged.
+Latest accepted architecture baseline: CP-000E, accepted at `882a2ef`. The CP-000E-created ADRs and
+`docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md` do **not** exist at the base
+repository evidence commit `8d94c6a`; they enter authority through the accepted CP-000E commit.
 
 ## Why this manifest exists
 
@@ -103,7 +103,7 @@ Every entry records `document_ref`, `status`, `decision_scope`, `owner`, `supers
 
 | document_ref | status | decision_scope | owner | supersedes_refs | augments_refs | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `docs/architecture/ai-assistant-canonical-delivery-roadmap-fa.md` | `CANONICAL_ROADMAP` | Package sequencing, package status, and delivery gates | Governance | `legacy-docs/00-master-architecture-roadmap-fa.md` | - | `CP-000R COMPLETE at 8d94c6a -> CP-000E CURRENT -> CP-001` |
+| `docs/architecture/ai-assistant-canonical-delivery-roadmap-fa.md` | `CANONICAL_ROADMAP` | Package sequencing, package status, and delivery gates | Governance | `legacy-docs/00-master-architecture-roadmap-fa.md` | - | `CP-000R COMPLETE at 8d94c6a -> CP-000E COMPLETE at 882a2ef -> CP-001 NEXT` |
 
 ## Authoritative supporting sources
 

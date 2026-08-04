@@ -1,6 +1,6 @@
 # CP-000E: Model, Integration, Audit, and Threat Baseline
 
-Status: Accepted architecture package pending review and merge of the CP-000E commit
+Status: Accepted architecture package at commit `882a2ef`
 Date: 2026-08-04
 Base branch: `main`
 Base repository evidence commit: `8d94c6a5617c449bb38fa995f267b63256eeaf88`

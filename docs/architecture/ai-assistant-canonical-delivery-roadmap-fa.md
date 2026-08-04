@@ -1,6 +1,6 @@
 # AI Assistant Canonical Delivery Roadmap
 
-Status: Accepted canonical roadmap updated by CP-000E; CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged
+Status: Accepted canonical roadmap; CP-000E accepted at commit `882a2ef`
 Authority: `CANONICAL_ROADMAP` in `docs/architecture/architecture-authority-manifest.md`
 Base branch: `main`
 Base repository evidence commit: `8d94c6a`
@@ -12,7 +12,7 @@ a precedence disclaimer to a stale body: the body itself was repaired so that th
 internally current. Stale phase statements, stale package states, and the obsolete AI configuration
 precedence were rewritten in place, and the accepted CP-000D and CP-000R decisions were recorded.
 
-Base repository evidence: `8d94c6a`. That commit contains the accepted CP-000R architecture consistency baseline. It does **not** contain CP-000E. CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged.
+Base repository evidence: `8d94c6a`. That commit contains CP-000R and predates CP-000E. CP-000E was accepted at commit `882a2ef`.
 
 ## Package status (authoritative)
 
@@ -23,8 +23,8 @@ Base repository evidence: `8d94c6a`. That commit contains the accepted CP-000R a
 | CP-000C Data and Index Isolation, Multi-Node Retrieval Baseline | `COMPLETE at 578f7fa` |
 | CP-000D Configuration Artifacts, Activation Lifecycle and RuntimeSnapshot Baseline | `COMPLETE at 6477c1c` |
 | CP-000R Complete Architecture Consistency Repair | `COMPLETE at 8d94c6a` |
-| CP-000E Model Boundary, Integration, Audit and Threat Baseline | `CURRENT` |
-| CP-001 Control Plane Contracts | `BLOCKED UNTIL CP-000E ACCEPTANCE` |
+| CP-000E Model Boundary, Integration, Audit and Threat Baseline | `COMPLETE at 882a2ef` |
+| CP-001 Control Plane Contracts | `NEXT / UNBLOCKED` |
 
 Delivery sequence:
 
@@ -343,15 +343,15 @@ CP-000B  COMPLETE at c9416cc
 CP-000C  COMPLETE at 578f7fa
 CP-000D  COMPLETE at 6477c1c
 CP-000R  COMPLETE at 8d94c6a
-CP-000E  CURRENT
-CP-001   BLOCKED until CP-000E is accepted
+CP-000E  COMPLETE at 882a2ef
+CP-001   NEXT / UNBLOCKED
 ```
 
 `CP-000A` تا `CP-000D` همه merge شده‌اند. هیچ commit یا merge معلقی برای آن‌ها باقی نیست، و
 هیچ verification یا canonicalization معلقی در Phase 0 باز نیست.
 
-`CP-000R` در commit `8d94c6a` بسته شده است. `CP-000E` package جاری است و acceptance آن زمانی
-مؤثر می‌شود که commit مربوطه review و merge شود.
+`CP-000R` در commit `8d94c6a` و `CP-000E` در commit `882a2ef` بسته شده‌اند. `CP-001` اکنون
+unblocked و package بعدی است.
 
 ---
 
@@ -469,7 +469,7 @@ RuntimeSnapshot composition diagram
 
 ---
 
-## CP-000E — Model Boundary, Integration, Audit and Threat Baseline — `CURRENT`
+## CP-000E — Model Boundary, Integration, Audit and Threat Baseline — `COMPLETE at 882a2ef`
 
 ### Deliverables
 
@@ -1488,7 +1488,6 @@ no critical authorization/privacy regression
 
 # 22. Immediate Next Step
 
-1. `CP-000E — Model Boundary, Integration, Audit and Threat Baseline` را review و merge کن.
-2. پس از acceptance آن، `CP-001 — Control Plane Contracts` را آغاز کن.
-3. `CP-000A`، `CP-000B`، `CP-000C`، `CP-000D` و `CP-000R` بسته شده‌اند و دیگر در انتظار verification یا merge نیستند.
-4. هیچ LiteLLM، Backend queue، Redis یا Admin Website implementation پیش از package owner مربوطه complete محسوب نمی‌شود.
+1. `CP-001 — Control Plane Contracts` را آغاز کن.
+2. `CP-000A`، `CP-000B`، `CP-000C`، `CP-000D`، `CP-000R` و `CP-000E` بسته شده‌اند.
+3. هیچ LiteLLM، Backend queue، Redis یا Admin Website implementation پیش از package owner مربوطه complete محسوب نمی‌شود.

@@ -1,7 +1,6 @@
 # ADR-CP-008: Model Gateway, Provider Pool, and Credential Boundary
 
-Status: Accepted architecture baseline (originated as CP-000E; acceptance becomes effective when the
-CP-000E package commit is reviewed and merged)
+Status: Accepted architecture baseline at commit `882a2ef` (CP-000E)
 Implementation remains owned by the packages identified in this document.
 Date: 2026-08-04
 Owner: Control Plane / AI Runtime Boundary

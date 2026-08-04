@@ -16,9 +16,9 @@ It keeps the AI Core small and provider-neutral while preventing contract-only d
 ## Evidence basis and repository-state note
 
 - Contract acceptance baseline: `CONTRACT-000` through `CONTRACT-012`, including corrective task `CONTRACT-012.1`.
-- **Authoritative repository snapshot: branch `main`, HEAD `8d94c6a`, clean working tree.**
-- **Latest accepted architecture baseline: CP-000R (Complete Architecture Consistency Repair),
-  accepted at `8d94c6a`.** CP-000A through CP-000D precede it and are accepted.
+- **Authoritative repository snapshot: branch `main`, HEAD `882a2ef`, clean working tree.**
+- **Latest accepted architecture baseline: CP-000E (Model, Integration, Audit, and Threat Baseline),
+  accepted at `882a2ef`.** CP-000A through CP-000R precede it and are accepted.
 - **Architect-supplied verification evidence, captured on the canonical local machine at `6477c1c`**
   (this evidence was **not** independently reproduced while preparing this repair; it is transcribed
   exactly as provided):
@@ -250,7 +250,7 @@ alternatives in any document.
 
 | Package | Canonical name | Deferred obligations owned |
 | --- | --- | --- |
-| CP-000E | Model Boundary, Integration, Audit and Threat Baseline | Current architecture closure package; does not mark LiteLLM, Backend queue, Redis, UI, audit or security implementation complete |
+| CP-000E | Model Boundary, Integration, Audit and Threat Baseline | Accepted architecture closure package; does not mark LiteLLM, Backend queue, Redis, UI, audit or security implementation complete |
 | CP-001 | Control Plane Contracts | `DEF-103`, `DEF-104`, `DEF-105`, `DEF-106`, `DEF-108`, `DEF-114`, `DEF-115`, `DEF-116`, `DEF-119`, `DEF-121` |
 | CP-002 | Authorization Hierarchy | `DEF-105`, `DEF-106`, `DEF-107`, `DEF-108` |
 | CP-003 | Artifact Registry Core | Artifact revision registry and validation layers |
@@ -332,11 +332,11 @@ Every task review must:
 Delivery sequence:
 
 ```text
-CP-000R  (accepted at 8d94c6a)  ->  CP-000E  (current)  ->  CP-001
+CP-000R  (accepted at 8d94c6a)  ->  CP-000E  (accepted at 882a2ef)  ->  CP-001  (next)
 ```
 
-1. Review and accept CP-000E. `CP-001` is **blocked until CP-000E acceptance**.
-2. After CP-000E acceptance, begin CP-001 Control Plane Contracts.
+1. Begin CP-001 Control Plane Contracts. CP-001 is no longer blocked by an architecture gate.
+2. Keep all LiteLLM, Backend queue, Redis, Admin Website, audit and security implementation items open until their package evidence passes.
 3. Resolve the `uv` version-range warning (`uv-build>=0.9.2,<0.10` versus local `uv 0.12.1`) as a
    toolchain obligation; it is currently unresolved.
 4. Complete the final delta review for `DEF-089` and `DEF-090`; mark them `DONE` only after all four
@@ -353,7 +353,7 @@ CP-000R  (accepted at 8d94c6a)  ->  CP-000E  (current)  ->  CP-001
 ## Version 0.7.0 change log
 
 - Updated the accepted repository evidence baseline to CP-000R commit `8d94c6a`.
-- Recorded CP-000E as the current architecture closure package and CP-001 as blocked only until CP-000E acceptance.
+- Recorded CP-000E as accepted at `882a2ef` and CP-001 as the next unblocked package.
 - Expanded `DEF-032`, `DEF-036`, `DEF-037`, `DEF-038`, `DEF-043`, `DEF-099`, `DEF-100`, and `DEF-102` with the accepted LiteLLM, Backend queue, Redis separation, Admin Website, capacity, audit, emergency, and threat boundaries.
 - Added no new DEF identifier because CP-000E obligations map to existing implementation items without duplication.
 - Recorded that 300 active and 1,500 queued are Backend/PERF assumptions, not AI Core configuration or a proven production guarantee.

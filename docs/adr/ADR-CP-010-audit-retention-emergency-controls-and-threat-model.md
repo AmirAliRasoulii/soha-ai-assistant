@@ -1,7 +1,6 @@
 # ADR-CP-010: Audit, Retention, Emergency Controls, and Threat Model Baseline
 
-Status: Accepted architecture baseline (originated as CP-000E; acceptance becomes effective when the
-CP-000E package commit is reviewed and merged)
+Status: Accepted architecture baseline at commit `882a2ef` (CP-000E)
 Implementation remains owned by the packages identified in this document.
 Date: 2026-08-04
 Owner: Security / Audit / Reliability Governance
