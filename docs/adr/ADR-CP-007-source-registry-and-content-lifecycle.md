@@ -1,6 +1,6 @@
 # ADR-CP-007: Source Registry and Content Lifecycle
 
-Status: Accepted architecture baseline (originated as CP-000B; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted architecture baseline (originated as CP-000B; CP-000R consistency repair applied, and CP-000R was accepted at commit `8d94c6a`)
 Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000B architecture package
 Owner: Control Plane / Source Registry Baseline

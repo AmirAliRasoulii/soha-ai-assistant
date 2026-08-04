@@ -5,7 +5,7 @@
 Status: Accepted and implemented bounded in-process baseline.
 
 Base repository evidence: `6477c1c`. Bounded implementation existed at base commit `6477c1c`.
-CP-000R documentation acceptance becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R documentation was accepted at commit `8d94c6a`.
 
 This document describes the WS-004B terminal closure of the bounded fast
 document Walking Skeleton. It provides accepted bounded-scope evidence for

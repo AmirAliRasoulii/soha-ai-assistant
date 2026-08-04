@@ -1,6 +1,6 @@
 # CP-000B Source Lifecycle Matrix (conceptual baseline)
 
-Status: Accepted architecture baseline (originated as CP-000B; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted architecture baseline (originated as CP-000B; CP-000R consistency repair applied, and CP-000R was accepted at commit `8d94c6a`)
 Implementation remains owned by the packages identified in this document.
 Owner: Control Plane / Source Registry Baseline
 Companions: `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`,

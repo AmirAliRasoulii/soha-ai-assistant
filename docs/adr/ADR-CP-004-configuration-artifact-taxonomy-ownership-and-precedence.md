@@ -1,6 +1,6 @@
 # ADR-CP-004: Configuration Artifact Taxonomy, Ownership, and Precedence
 
-Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R was accepted at commit `8d94c6a`)
 Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000D architecture package
 Owner: Control Plane / Configuration Ownership Baseline

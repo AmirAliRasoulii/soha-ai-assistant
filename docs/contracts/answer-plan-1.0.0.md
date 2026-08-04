@@ -7,8 +7,8 @@ Owner: Answer Planning Boundary
 ## Bounded baseline status and known limitations (CP-000R)
 
 This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
-`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
-becomes effective when the CP-000R commit is reviewed and merged.
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation was
+accepted at commit `8d94c6a`.
 CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
 records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
 work.

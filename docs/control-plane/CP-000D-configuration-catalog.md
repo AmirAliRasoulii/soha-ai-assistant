@@ -1,6 +1,6 @@
 # CP-000D Configuration Catalog
 
-Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R was accepted at commit `8d94c6a`)
 Implementation remains owned by the packages identified in this document.
 Scope: operational companion to `ADR-CP-004`, `ADR-CP-005`, and `ADR-CP-006`. Tables only. No
 provider is selected, no numeric threshold is fixed, no typed contract is defined, and no benchmark

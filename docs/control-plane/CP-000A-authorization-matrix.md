@@ -1,6 +1,6 @@
 # CP-000A Authorization Matrix (conceptual baseline, revision R1)
 
-Status: Accepted architecture baseline (originated as CP-000A revision R1; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted architecture baseline (originated as CP-000A revision R1; CP-000R consistency repair applied, and CP-000R was accepted at commit `8d94c6a`)
 Implementation remains owned by the packages identified in this document.
 Owner: Control Plane / Authorization Scope Baseline
 Companions: `docs/adr/ADR-CP-001-organization-and-department-hierarchy.md`,

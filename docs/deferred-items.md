@@ -1,7 +1,7 @@
 # Deferred Items Register
 
-- **Version:** 0.6.0
-- **Updated:** with the CP-000R architecture consistency repair package
+- **Version:** 0.7.0
+- **Updated:** with the CP-000E model, integration, audit, and threat architecture package
 - **Canonical source:** Git. This file is committed in the authoritative repository, so Git is
   canonical for deferred-work tracking; no external copy overrides it.
 - **Repository path:** `docs/deferred-items.md`
@@ -16,9 +16,9 @@ It keeps the AI Core small and provider-neutral while preventing contract-only d
 ## Evidence basis and repository-state note
 
 - Contract acceptance baseline: `CONTRACT-000` through `CONTRACT-012`, including corrective task `CONTRACT-012.1`.
-- **Authoritative repository snapshot: branch `main`, HEAD `6477c1c`, clean working tree.**
-- **Latest accepted architecture baseline: CP-000D (Configuration Artifacts, Activation Lifecycle, and
-  RuntimeSnapshot), accepted at `6477c1c`.** CP-000A, CP-000B, and CP-000C precede it and are accepted.
+- **Authoritative repository snapshot: branch `main`, HEAD `8d94c6a`, clean working tree.**
+- **Latest accepted architecture baseline: CP-000R (Complete Architecture Consistency Repair),
+  accepted at `8d94c6a`.** CP-000A through CP-000D precede it and are accepted.
 - **Architect-supplied verification evidence, captured on the canonical local machine at `6477c1c`**
   (this evidence was **not** independently reproduced while preparing this repair; it is transcribed
   exactly as provided):
@@ -49,7 +49,7 @@ It keeps the AI Core small and provider-neutral while preventing contract-only d
   accepted package.** Meeting fewer than all four is never `DONE`. `DONE` on an artifact never closes
   the separate runtime, adapter, governance, evaluation, privacy, supply-chain, or operational items
   listed below.
-- **Documentation status is not implementation status.** An architecture document accepted through CP-000R
+- **Documentation status is not implementation status.** An architecture document accepted through CP-000E
   records a decision; it never asserts that the decision is implemented in Git.
 
 ## Architectural ownership
@@ -143,18 +143,18 @@ bounded scope, and `DEF-092` remains `PLANNED` for the production components tha
 | DEF-029 | RunContext / ChatRun | AI Core | Bind request, security context, authorization decision, RuntimeSnapshot, deadlines, cancellation, correlation, and terminal state | RuntimeSnapshot intentionally has no `run_id` | Walking Skeleton runtime-context task | PLANNED |
 | DEF-030 | Runtime artifact schemas | AI Core contracts + Control Plane | Define versioned schemas for config, prompt, model policy, model artifact, structured-output backend, retrieval, embedding, reranker, index, semantic catalog, rules, security policy, and telemetry artifacts | RuntimeSnapshot references immutable artifacts but does not define their contents | Capability and configuration milestones | OPEN |
 | DEF-031 | Artifact registry lifecycle | Control Plane + Platform | Define immutable revisions, digest pinning, active pointers, approvals, retention, rollback, and garbage collection | Safe hotfix and replay require stable artifact lifecycle semantics | Configuration registry milestone | OPEN |
-| DEF-032 | Credential pool operations | Adapter + Platform | Define credential leasing, quotas, health checks, cooldown, rotation, revocation, and provider-safe retry behavior | Secret values and provider operations must stay outside AI Core | Model provider operations milestone | OPEN |
+| DEF-032 | Credential pool operations | Adapter + Platform | Implement multi-provider and multi-deployment credential pools, credential leasing, quota metadata, health checks, cooldown, rotation, revocation, provider-safe retry, and mapping of provider-neutral pool policy to the qualified LiteLLM gateway without exposing raw secrets to AI Core | Secret values, LiteLLM configuration and provider operations must stay outside AI Core; CP-000E fixes the boundary but supplies no adapter | CP-008 and CP-012 model provider operations milestone | OPEN |
 | DEF-033 | Configuration permissions | Control Plane + Governance | Define who may view, draft, approve, activate, roll back, disable, or rotate each configuration and credential type | Admin capability must not imply unrestricted production access | Control Plane authorization milestone | OPEN |
 | DEF-034 | Configuration auditability | Control Plane + Audit | Record before/after artifact references, actor, reason, approval, activation time, rollback target, and affected runtime snapshots | Operational changes must be attributable and replayable | Control Plane and Audit integration | OPEN |
 | DEF-035 | Hard configuration bounds | AI Core contracts + Control Plane | Define safety ceilings that cannot be weakened from the admin panel | Not every configurable value should be freely editable | Configuration schema tasks | OPEN |
-| DEF-036 | Model rollout | Adapter + Control Plane + Evaluation | Support staged rollout, traffic weighting, canary comparison, automatic fallback, emergency disable, and rollback | Direct global model replacement is unsafe | Model operations milestone | OPEN |
-| DEF-037 | Provider-neutral AI ports | AI Core ports + Adapter | Define provider-neutral model invocation, embedding, reranking, and structured-output ports | Provider SDK objects must never enter domain contracts | Walking Skeleton provider-neutral port task | PLANNED |
-| DEF-038 | Configuration cache | Adapter | Define snapshot/config caching, invalidation, consistency, and last-known-good behavior | Runtime must remain available during control-plane or registry outages | Walking Skeleton reliability milestone | OPEN |
+| DEF-036 | Model rollout | Adapter + Control Plane + Evaluation | Support staged rollout, static priority/weight, compatibility-classed bounded fallback, canary comparison, emergency disable, rollback, and exact selected-deployment audit across approved logical model pools | Direct global model replacement and unconstrained cross-model fallback are unsafe; CP-000E selects a simple bounded v1 strategy but does not implement it | CP-008, CP-009, CP-012 and CP-013 model operations milestone | OPEN |
+| DEF-037 | Provider-neutral AI ports | AI Core ports + Adapter | Define and implement a provider-neutral `ModelGatewayPort` plus model invocation, streaming, cancellation, deadline, embedding, reranking, and structured-output boundaries; LiteLLM/provider SDK objects must terminate in CP-012 adapters | Existing bounded Core ports prove the pattern, but no production model gateway port or LiteLLM adapter exists; CP-000E fixes strict AI purity | CP-001 contracts with AI-008 runtime and CP-012 adapters | PLANNED |
+| DEF-038 | Configuration cache | Adapter | Implement snapshot/config caching, pull-based resolution, invalidation hints, consistency and bounded last-known-good behavior; keep Backend queue state and LiteLLM coordination state outside AI Core with explicit ownership and failure policy | Runtime must remain available during control-plane or registry outages without allowing known revoke/disable to be masked by cache | CP-004 and CP-012 reliability milestone | OPEN |
 | DEF-039 | Missing or invalid artifacts | AI Core + Adapter | Define fail-closed behavior for missing, unreadable, revoked, expired, or digest-mismatched artifacts | RuntimeSnapshot references alone do not prove availability or integrity | RuntimeSnapshotFactory implementation | OPEN |
 | DEF-040 | Rollback safety and evaluation gates | Control Plane + Evaluation | Define compatibility checks and minimum evaluation gates for prompt, model, retrieval, rule, and policy rollbacks | A syntactically valid previous revision may be operationally incompatible | Pre-production release gate milestone | OPEN |
 | DEF-041 | RFC 9457 HTTP mapping | Adapter | Map `ErrorEnvelope` to RFC 9457 Problem Details with context-aware HTTP status, media type, safe extensions, and stable product-controlled problem type URIs | HTTP semantics must remain outside AI Core | HTTP API adapter milestone | PLANNED |
 | DEF-042 | Safe-message catalogs | Adapter + Governance | Define versioned Persian and English catalogs for `safe_message_key`, localization fallback, review, and compatibility | ErrorEnvelope stores a message key, not user-facing prose | Error presentation and localization milestone | OPEN |
-| DEF-043 | Retry semantics | AI Core policy + Adapter | Define `Retry-After`, bounded backoff, retry budgets, idempotency interaction, circuit breaking, and code-specific retry policy | `retryable` only indicates eligibility, not execution | Runtime reliability milestone | OPEN |
+| DEF-043 | Retry semantics | AI Core policy + Adapter | Define Backend `Retry-After`, per-request bounded backoff/retry budgets, shared deadlines, idempotency interaction, circuit breaking, provider cooldown, compatibility-classed model fallback, and code-specific retry policy | `retryable` only indicates eligibility; Backend overload retry and AI/provider retry are different boundaries and must not create retry storms | CP-010 Backend/API plus AI-009 and CP-012 reliability milestones | OPEN |
 | DEF-044 | Internal error records | Platform + Governance + Adapter | Define storage, lookup authorization, retention, redaction, deletion, and incident access for records referenced by `internal_detail_ref` | ErrorEnvelope carries only an opaque reference | Error operations milestone | OPEN |
 | DEF-045 | Model qualification matrix | Evaluation + Governance | Build task-specific qualification across architecture review, contract implementation, refactoring, debugging, QueryAnalysis, routing, planning, generation, and final review; compare approved candidate models; and define the validity, freshness, expiry, dependency-revocation, and reuse policy for pinned provider/model/credential/reasoning-profile probe evidence | Model quality, cost, latency, reliability, and provider-probe evidence freshness must be measured and governed rather than assumed; model availability, names, credentials, capabilities, and provider acceptance may change | Evaluation-plane milestone, before changing the default implementation model, and before relying on previously captured provider-probe evidence for activation | PLANNED |
 | DEF-046 | Query analyzer implementation | AI Core + Adapter | Implement the trusted analyzer boundary, structured-output prompt, allowlist validation, and one bounded format-repair attempt | CONTRACT-006 defines only the validated payload | Walking Skeleton Query Analyzer task | PLANNED |
@@ -210,10 +210,10 @@ bounded scope, and `DEF-092` remains `PLANNED` for the production components tha
 | DEF-096 | Rule Evaluator | AI Core capability + Adapter | Implement versioned deterministic rules, input binding, trace-safe outcomes, evidence generation, and evaluation | Rule artifacts and runtime evaluator are not yet implemented | Rule Evaluator milestone | OPEN |
 | DEF-097 | Official Search | AI Core capability + Adapter | Implement optional allowlisted official-source search with policy, freshness, evidence, citation, and failure controls | External web access is optional and deployment-profile dependent | Official Search milestone when enabled by organization profile | OPEN |
 | DEF-098 | Evaluation Plane | Evaluation + Platform | Implement datasets, replay harnesses, task/model qualification, regression gates, red-team suites, release evidence, and production-candidate evaluation separate from Langfuse | Contract tests and observability are not the independent evaluation plane required by the architecture | Evaluation Plane milestone | OPEN |
-| DEF-099 | Product/API/UI integration | Adapter + Control Plane | Build backend controllers, transport DTOs, user interface, administration workflows, product-safe presentation, and the Central Source Approver pending-review read model and bounded review-surface contract around the AI Core | Frontend, HTTP controllers, admin product, business integration, and the cross-department pending-review surface do not exist in the contract package; `source.review` is defined architecturally but has no read-model/API implementation | Product integration milestones; CP-009 application-service design and CP-010 Backend/API boundary | OPEN |
-| DEF-100 | Deployment, scalability, availability, and production operations | Platform + Governance | Define an Organization Deployment Profile and NFR/SLO baseline, then implement isolated organization deployment, databases, queues, secret management, networking, CI/CD, readiness/liveness, graceful shutdown, bounded concurrency, bulkheads, backpressure/load shedding, horizontal scaling, backups, RPO/RTO profiles, restore drills, high availability, game days, fleet inventory, IaC, incident response, and operational runbooks | The current repository is an AI Core contract package, not a deployable production product; production characteristics must be explicit per organization profile | Deployment and production-readiness milestones | OPEN |
+| DEF-099 | Product/API/UI integration | Adapter + Control Plane | Build backend controllers, admission/job-status/cancellation and overload DTOs, Admin Website configuration workflows, product-safe presentation, masked credential/deployment read models, and the Central Source Approver pending-review read model and bounded review-surface contract around the AI Core | Frontend, HTTP controllers, Backend queue APIs, AI configuration UI and source-review read models do not exist; CP-000E fixes that UI changes provider-neutral artifacts only through Control Plane commands | CP-009, CP-010 and CP-011 product integration milestones | OPEN |
+| DEF-100 | Deployment, scalability, availability, and production operations | Platform + Governance | Define an Organization Deployment Profile and NFR/SLO baseline, then implement Backend admission for the initial 300 active / 1,500 queued assumption, bounded queue and load shedding, independent LiteLLM gateway scaling, separated Backend-queue and gateway-coordination stores, secret management, networking, readiness/liveness, graceful shutdown, bulkheads, horizontal scaling, backups, RPO/RTO, game days, IaC, incident response and runbooks | The current repository is an AI Core contract package, not a deployable production product; CP-000E records capacity assumptions only, and no throughput or concurrency guarantee exists without PERF-001 evidence | CP-010, CP-012, PERF-001 and production-readiness milestones | OPEN |
 | DEF-101 | Software supply-chain security | Platform + Governance | Implement SBOM generation, artifact signing, build provenance/attestation, dependency and model-artifact verification, trusted internal mirrors where required, release-integrity checks, and the exact immutable `BuildArtifact` metadata, qualification, provenance, digest, and verification rules consumed by `ConfigurationRelease` and `RuntimeSnapshotFactory` | Build success alone does not prove software, model, or release-pinned `BuildArtifact` integrity; the exact qualified metadata shape is not yet contracted | Secure build and release milestone before production deployment; CP-001 and CP-004 contract/factory design | OPEN |
-| DEF-102 | Threat-model baseline | Governance + Security + Evaluation | Create and review a threat model and abuse/security test plan for every approved trust boundary, including user input, identity, authorization, model output, tool/provider output, attachments, evidence, SQL planning, citations, configuration, audit, and administration | Contract validation describes shape but does not enumerate threats, abuse paths, mitigations, or security-test coverage | Before implementing each affected runtime boundary; Walking Skeleton receives the minimum applicable baseline | OPEN |
+| DEF-102 | Threat-model baseline | Governance + Security + Evaluation | Implement and continuously review the CP-000E threat/test baseline across prompt injection, provider output, LiteLLM/private-network exposure, credential leakage, queue flooding, retry storms, stale revoke, admin tampering, cross-scope evidence, audit leakage, event replay, supply chain, Redis boundary separation, cancellation and degraded fallback | CP-000E defines architecture threats and owners, but security controls and abuse tests are not implemented | CP-014 and CP-013 before production of each affected boundary | OPEN |
 
 ### CP-000R additions (architecture-gap obligations)
 
@@ -250,7 +250,7 @@ alternatives in any document.
 
 | Package | Canonical name | Deferred obligations owned |
 | --- | --- | --- |
-| CP-000E | Model Boundary, Integration, Audit and Threat Baseline | Next architecture closure gate; does not mark runtime implementation complete |
+| CP-000E | Model Boundary, Integration, Audit and Threat Baseline | Current architecture closure package; does not mark LiteLLM, Backend queue, Redis, UI, audit or security implementation complete |
 | CP-001 | Control Plane Contracts | `DEF-103`, `DEF-104`, `DEF-105`, `DEF-106`, `DEF-108`, `DEF-114`, `DEF-115`, `DEF-116`, `DEF-119`, `DEF-121` |
 | CP-002 | Authorization Hierarchy | `DEF-105`, `DEF-106`, `DEF-107`, `DEF-108` |
 | CP-003 | Artifact Registry Core | Artifact revision registry and validation layers |
@@ -258,11 +258,11 @@ alternatives in any document.
 | CP-005 | Department Source Registry | `DEF-103`, `DEF-104`, `DEF-121` |
 | CP-006 | Ingestion and Index Lifecycle | `DEF-104`, `DEF-111`, `DEF-113`, `DEF-117`, `DEF-119`, `DEF-121` |
 | CP-007 | Retrieval and Official Search Profiles | Retrieval-profile and official-search policy obligations; does **not** own node-directory publication |
-| CP-008 | Model/Provider/Credential Pool | `DEF-045`; provider and credential pool obligations |
+| CP-008 | Model/Provider/Credential Pool | `DEF-032`, `DEF-036`, `DEF-045`; provider, deployment, credential pool and qualification obligations |
 | CP-009 | Control Plane Application Services | `DEF-099`, `DEF-105`, `DEF-114`, `DEF-115`, `DEF-119`; owns source-activation application-service semantics |
-| CP-010 | Backend/API Integration Boundary | `DEF-099`, `DEF-105`; Django/backend integration and read-model/API boundaries |
+| CP-010 | Backend/API Integration Boundary | `DEF-043`, `DEF-099`, `DEF-100`, `DEF-105`; Backend admission, queue/overload, Django integration and read-model/API boundaries |
 | CP-011 | Admin Website Integration | `DEF-099`; admin surface obligations |
-| CP-012 | Production Adapters | `DEF-111`, `DEF-115`; storage, delivery, backend selection, physical topology, and operational qualification |
+| CP-012 | Production Adapters | `DEF-032`, `DEF-037`, `DEF-038`, `DEF-043`, `DEF-100`, `DEF-101`, `DEF-111`, `DEF-115`; LiteLLM, Redis/queue, Secret Manager, storage, delivery and physical topology |
 | CP-013 | Evaluation and Rollout Gates | `DEF-045`, `DEF-112`, `DEF-120` |
 | CP-014 | Security Closure | Production hardening and compliance closure |
 | AI-001 | Conversation Context and Persian Understanding | Context building, Persian understanding, query analysis |
@@ -332,11 +332,11 @@ Every task review must:
 Delivery sequence:
 
 ```text
-CP-000R  (this repair package)  ->  CP-000E  ->  CP-001
+CP-000R  (accepted at 8d94c6a)  ->  CP-000E  (current)  ->  CP-001
 ```
 
-1. Review and accept CP-000R. `CP-001` is **blocked until CP-000R and CP-000E acceptance**.
-2. Then execute `CP-000E` as the next architecture package.
+1. Review and accept CP-000E. `CP-001` is **blocked until CP-000E acceptance**.
+2. After CP-000E acceptance, begin CP-001 Control Plane Contracts.
 3. Resolve the `uv` version-range warning (`uv-build>=0.9.2,<0.10` versus local `uv 0.12.1`) as a
    toolchain obligation; it is currently unresolved.
 4. Complete the final delta review for `DEF-089` and `DEF-090`; mark them `DONE` only after all four
@@ -348,6 +348,16 @@ CP-000R  (this repair package)  ->  CP-000E  ->  CP-001
    relying on any audit record as durable completion evidence.
 7. Acceptance of the contract artifacts, and acceptance of an architecture document, must not mark
    their separate runtime, adapter, security, evaluation, governance, or operational items complete.
+
+
+## Version 0.7.0 change log
+
+- Updated the accepted repository evidence baseline to CP-000R commit `8d94c6a`.
+- Recorded CP-000E as the current architecture closure package and CP-001 as blocked only until CP-000E acceptance.
+- Expanded `DEF-032`, `DEF-036`, `DEF-037`, `DEF-038`, `DEF-043`, `DEF-099`, `DEF-100`, and `DEF-102` with the accepted LiteLLM, Backend queue, Redis separation, Admin Website, capacity, audit, emergency, and threat boundaries.
+- Added no new DEF identifier because CP-000E obligations map to existing implementation items without duplication.
+- Recorded that 300 active and 1,500 queued are Backend/PERF assumptions, not AI Core configuration or a proven production guarantee.
+- Preserved the range `DEF-001` through `DEF-121` and all existing statuses.
 
 ## Version 0.6.0 change log
 

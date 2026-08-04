@@ -1,17 +1,16 @@
 # Architecture Authority Manifest
 
-Status: Accepted architecture baseline (originated as CP-000R; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted architecture authority baseline updated by CP-000E; CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged
 Implementation remains owned by the packages identified in this document.
 Scope: document authority, precedence, and supersession. This manifest decides **which document is
 authoritative for which decision**. It creates no architecture decision of its own, and it asserts no
 implementation that Git does not contain.
 
 Base branch: `main`
-Base repository evidence commit: `6477c1c`
-Latest accepted architecture baseline: CP-000D, accepted at `6477c1c`. The CP-000R-created files
-(this manifest, `docs/architecture/ai-assistant-canonical-delivery-roadmap-fa.md`, and
-`docs/control-plane/CP-000R-architecture-consistency-repair.md`) and the CP-000R repair ledger do **not**
-exist at `6477c1c`. CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged.
+Base repository evidence commit: `8d94c6a`
+Latest accepted architecture baseline: CP-000R, accepted at `8d94c6a`. The CP-000E-created ADRs and
+`docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md` do **not** exist at `8d94c6a`.
+CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged.
 
 ## Why this manifest exists
 
@@ -88,19 +87,23 @@ Every entry records `document_ref`, `status`, `decision_scope`, `owner`, `supers
 | `docs/adr/ADR-CP-005-configuration-versioning-activation-and-rollback.md` | `CANONICAL_ARCHITECTURE` | Artifact revisions, validation layers, `ConfigurationRelease`, activation, rollback | Control Plane | - | `docs/control-plane/CP-000D-configuration-catalog.md` | `APPROVED` does not imply a second human approver |
 | `docs/adr/ADR-CP-006-runtime-snapshot-factory-cache-and-lkg.md` | `CANONICAL_ARCHITECTURE` | `RuntimeSnapshotFactory`, cache, bounded Last-Known-Good | Control Plane | - | `docs/control-plane/CP-000D-configuration-catalog.md`, `docs/contracts/runtime-snapshot-1.0.0.md` | Bounded LKG; a known revoke or disable defeats LKG |
 | `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md` | `CANONICAL_ARCHITECTURE` | Source registry, revisions, authority, temporal metadata, relationships, metadata classes, approval workflow | Control Plane | - | `docs/control-plane/CP-000B-source-lifecycle-matrix.md` | Not implemented (`DEF-103`, `DEF-104`, `DEF-119`, `DEF-121`) |
+| `docs/adr/ADR-CP-008-model-gateway-provider-pool-and-credential-boundary.md` | `CANONICAL_ARCHITECTURE` | Pure AI model gateway boundary, provider/deployment/credential pool, LiteLLM adapter placement, bounded load balancing and fallback | CP-008 / AI Runtime Boundary | - | `docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md`, `docs/adr/ADR-CP-004-configuration-artifact-taxonomy-ownership-and-precedence.md` | Architecture only; implementation remains in `DEF-032`, `DEF-036`, `DEF-037`, `DEF-045`, `DEF-100` |
+| `docs/adr/ADR-CP-009-backend-control-plane-and-runtime-integration-boundary.md` | `CANONICAL_ARCHITECTURE` | Backend admission/queue ownership, commands/events/snapshot pull, cancellation, idempotency and Admin Website configuration path | CP-009 / CP-010 | - | `docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md` | AI Core owns no global queue or Redis; implementation remains in `DEF-038`, `DEF-043`, `DEF-099`, `DEF-100` |
+| `docs/adr/ADR-CP-010-audit-retention-emergency-controls-and-threat-model.md` | `CANONICAL_ARCHITECTURE` | Audit/telemetry split, retention/legal hold boundary, emergency controls and threat baseline | Security / Audit Governance | - | `docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md`, `docs/contracts/audit-event-1.0.0.md` | Architecture only; implementation remains in `DEF-101`, `DEF-102`, `DEF-113`, `DEF-114`, `DEF-115` |
 | `docs/control-plane/CP-000A-authorization-matrix.md` | `CANONICAL_ARCHITECTURE` | Organization and authorization actions per actor | Control Plane | - | `docs/adr/ADR-CP-001-organization-and-department-hierarchy.md`, `docs/adr/ADR-CP-002-membership-role-and-authorization-scope.md` | **Delegates all source actions to `CP-000B`** |
 | `docs/control-plane/CP-000B-source-lifecycle-matrix.md` | `CANONICAL_ARCHITECTURE` | **Single canonical source lifecycle and source-action matrix** | Control Plane | `docs/control-plane/CP-000A-authorization-matrix.md` | `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md` | Supersedes the former source-action rows in CP-000A and wins over any other document on source actions |
 | `docs/control-plane/CP-000C-index-isolation-blueprint.md` | `CANONICAL_ARCHITECTURE` | Isolation metadata subset, tiers, query-path invariants, benchmark plan | Control Plane | - | `docs/adr/ADR-CP-003-data-index-isolation-and-multi-node-retrieval.md` | No provider selected; no benchmark result asserted |
 | `docs/control-plane/CP-000D-configuration-catalog.md` | `CANONICAL_ARCHITECTURE` | Configuration artifact and control catalog | Control Plane | - | `docs/adr/ADR-CP-004-configuration-artifact-taxonomy-ownership-and-precedence.md`, `docs/adr/ADR-CP-005-configuration-versioning-activation-and-rollback.md`, `docs/adr/ADR-CP-006-runtime-snapshot-factory-cache-and-lkg.md` | - |
 | `docs/control-plane/CP-000R-architecture-consistency-repair.md` | `CANONICAL_ARCHITECTURE` | The consistency repair itself: repair ledger, dispositions, residual limitations | Governance | - | - | Documentation only. Created by CP-000R and not present at `6477c1c` |
-| `docs/deferred-items.md` | `CANONICAL_ARCHITECTURE` | Deferred obligations, ownership, and `DONE` criteria | Governance | `legacy-docs/deferred-items-register.md` | - | Version `0.6.0` is introduced by CP-000R and is not present at `6477c1c` |
+| `docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md` | `CANONICAL_ARCHITECTURE` | CP-000E decision summary, diagrams, emergency matrix, performance assumptions and requirement-to-package coverage | Governance / Control Plane | - | `docs/adr/ADR-CP-008-model-gateway-provider-pool-and-credential-boundary.md`, `docs/adr/ADR-CP-009-backend-control-plane-and-runtime-integration-boundary.md`, `docs/adr/ADR-CP-010-audit-retention-emergency-controls-and-threat-model.md` | Documentation only; does not claim LiteLLM, Backend queue, Redis, UI or audit implementation |
+| `docs/deferred-items.md` | `CANONICAL_ARCHITECTURE` | Deferred obligations, ownership, and `DONE` criteria | Governance | `legacy-docs/deferred-items-register.md` | - | Version `0.7.0` is updated by CP-000E; implementation obligations remain open |
 | `docs/architecture/architecture-authority-manifest.md` | `CANONICAL_ARCHITECTURE` | Document authority, precedence, and supersession | Governance | - | - | This document; before it, precedence was undocumented |
 
 ## Roadmap
 
 | document_ref | status | decision_scope | owner | supersedes_refs | augments_refs | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `docs/architecture/ai-assistant-canonical-delivery-roadmap-fa.md` | `CANONICAL_ROADMAP` | Package sequencing, package status, and delivery gates | Governance | `legacy-docs/00-master-architecture-roadmap-fa.md` | - | `CP-000R -> CP-000E -> CP-001` |
+| `docs/architecture/ai-assistant-canonical-delivery-roadmap-fa.md` | `CANONICAL_ROADMAP` | Package sequencing, package status, and delivery gates | Governance | `legacy-docs/00-master-architecture-roadmap-fa.md` | - | `CP-000R COMPLETE at 8d94c6a -> CP-000E CURRENT -> CP-001` |
 
 ## Authoritative supporting sources
 
@@ -139,11 +142,10 @@ not committed to this repository by CP-000R.
 5. This manifest records authority only. It never asserts that a decision is implemented.
 6. Every `supersedes_refs` and `augments_refs` value must be an exact repository path, an exact
    external source identifier, or `-`. Vague descriptive phrases are prohibited as reference values.
-7. This manifest must never claim that a file created by CP-000R existed at `6477c1c`. The three files
-   `docs/control-plane/CP-000R-architecture-consistency-repair.md`,
-   `docs/architecture/architecture-authority-manifest.md`, and
-   `docs/architecture/ai-assistant-canonical-delivery-roadmap-fa.md` are created by CP-000R and are
-   absent at `6477c1c`.
+7. This manifest must never claim that a file created by CP-000E existed at `8d94c6a`. The three
+   `ADR-CP-008`..`ADR-CP-010` files and
+   `docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md` are introduced by CP-000E and
+   are absent at `8d94c6a`.
 
 ## Canonical AI Module path
 

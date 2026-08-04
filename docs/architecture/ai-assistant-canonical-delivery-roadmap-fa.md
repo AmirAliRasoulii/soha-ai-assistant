@@ -1,9 +1,9 @@
 # AI Assistant Canonical Delivery Roadmap
 
-Status: Accepted architecture baseline (originated as CP-000R; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Status: Accepted canonical roadmap updated by CP-000E; CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged
 Authority: `CANONICAL_ROADMAP` in `docs/architecture/architecture-authority-manifest.md`
 Base branch: `main`
-Base repository evidence commit: `6477c1c`
+Base repository evidence commit: `8d94c6a`
 
 This file is the canonical delivery roadmap, committed to Git by CP-000R. Its origin is the
 architect-supplied canonical source (SHA-256
@@ -12,8 +12,7 @@ a precedence disclaimer to a stale body: the body itself was repaired so that th
 internally current. Stale phase statements, stale package states, and the obsolete AI configuration
 precedence were rewritten in place, and the accepted CP-000D and CP-000R decisions were recorded.
 
-Base repository evidence: `6477c1c`. That commit contains CP-000D; it does **not** contain CP-000R.
-CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged.
+Base repository evidence: `8d94c6a`. That commit contains the accepted CP-000R architecture consistency baseline. It does **not** contain CP-000E. CP-000E acceptance becomes effective when the CP-000E package commit is reviewed and merged.
 
 ## Package status (authoritative)
 
@@ -23,9 +22,9 @@ CP-000R acceptance becomes effective when the CP-000R commit is reviewed and mer
 | CP-000B Source Registry and Content Lifecycle Baseline | `COMPLETE at c9416cc` |
 | CP-000C Data and Index Isolation, Multi-Node Retrieval Baseline | `COMPLETE at 578f7fa` |
 | CP-000D Configuration Artifacts, Activation Lifecycle and RuntimeSnapshot Baseline | `COMPLETE at 6477c1c` |
-| CP-000R Complete Architecture Consistency Repair | `CURRENT` |
-| CP-000E Model Boundary, Integration, Audit and Threat Baseline | `NEXT` |
-| CP-001 Control Plane Contracts | `BLOCKED UNTIL CP-000R AND CP-000E ACCEPTANCE` |
+| CP-000R Complete Architecture Consistency Repair | `COMPLETE at 8d94c6a` |
+| CP-000E Model Boundary, Integration, Audit and Threat Baseline | `CURRENT` |
+| CP-001 Control Plane Contracts | `BLOCKED UNTIL CP-000E ACCEPTANCE` |
 
 Delivery sequence:
 
@@ -343,16 +342,16 @@ CP-000A  COMPLETE at 6e0d907
 CP-000B  COMPLETE at c9416cc
 CP-000C  COMPLETE at 578f7fa
 CP-000D  COMPLETE at 6477c1c
-CP-000R  CURRENT
-CP-000E  NEXT
-CP-001   BLOCKED until CP-000R and CP-000E are accepted
+CP-000R  COMPLETE at 8d94c6a
+CP-000E  CURRENT
+CP-001   BLOCKED until CP-000E is accepted
 ```
 
 `CP-000A` تا `CP-000D` همه merge شده‌اند. هیچ commit یا merge معلقی برای آن‌ها باقی نیست، و
 هیچ verification یا canonicalization معلقی در Phase 0 باز نیست.
 
-`CP-000R` package جاری است: یک documentation consistency repair که acceptance آن زمانی
-موّر می‌شود که commit مربوطه review و merge شود.
+`CP-000R` در commit `8d94c6a` بسته شده است. `CP-000E` package جاری است و acceptance آن زمانی
+مؤثر می‌شود که commit مربوطه review و merge شود.
 
 ---
 
@@ -470,15 +469,15 @@ RuntimeSnapshot composition diagram
 
 ---
 
-## CP-000E — Model Boundary, Integration, Audit and Threat Baseline — `NEXT`
+## CP-000E — Model Boundary, Integration, Audit and Threat Baseline — `CURRENT`
 
 ### Deliverables
 
 ```text
-ADR-CP-008
-ADR-CP-009
-ADR-CP-010
-Control Plane Roadmap
+docs/adr/ADR-CP-008-model-gateway-provider-pool-and-credential-boundary.md
+docs/adr/ADR-CP-009-backend-control-plane-and-runtime-integration-boundary.md
+docs/adr/ADR-CP-010-audit-retention-emergency-controls-and-threat-model.md
+docs/control-plane/CP-000E-model-integration-audit-threat-baseline.md
 command/event/pull diagrams
 audit taxonomy
 emergency-control matrix
@@ -489,15 +488,19 @@ Requirement-to-Package Coverage Matrix
 
 ### Decisions
 
-- provider-neutral model pool
-- credential references and Secret Manager boundary
-- commands/events/snapshot pull/cache invalidation
-- optimistic concurrency and idempotency expectations
-- audit metadata versus raw-content access
-- retention references and legal-hold boundary
-- emergency disable/revoke
-- threat model baseline
-- performance and sizing assumptions
+- AI Core remains pure: no Django, Redis, LiteLLM, provider SDK, Secret Manager, HTTP, or queue framework
+- production model calls cross a provider-neutral `ModelGatewayPort` into a private independent LiteLLM gateway service
+- multi-provider, multi-deployment, multi-credential logical model pools with simple static bounded v1 balancing
+- credential references and Secret Manager boundary; raw secrets never enter artifacts, snapshots, audit, logs, prompts, or frontend payloads
+- Backend owns global admission, queue, overload, job status, and later per-user fairness; AI Runtime owns only per-request bounds
+- initial sizing assumptions: approximately 20,000 registered students, 300 active admitted AI jobs, 1,500 accepted queued jobs, then overload rejection
+- Backend queue store and LiteLLM coordination store have separate ownership, credentials/namespaces, and failure policy
+- Admin Website changes provider-neutral AI settings only through authorized Control Plane commands, immutable revisions, validation/probe, `ConfigurationRelease`, and `RuntimeSnapshot`
+- commands/events/snapshot pull/cache invalidation with optimistic concurrency and idempotency
+- audit metadata versus raw-content access, retention references and legal-hold boundary
+- emergency disable/revoke; known revoke or disable defeats cache and LKG
+- threat model baseline and supply-chain pinning
+- performance assumptions remain unproven until PERF-001 evidence
 - exact CP-001 and AI work package boundaries
 
 ## CP-000 exit criteria
@@ -1485,7 +1488,7 @@ no critical authorization/privacy regression
 
 # 22. Immediate Next Step
 
-1. `CP-000R` را بازبینی و merge کن. تا زمان merge، acceptance این package مؤثر نیست.
-2. سپس `CP-000E — Model Boundary, Integration, Audit and Threat Baseline` را اجرا کن.
-3. `CP-001 — Control Plane Contracts` تا acceptance هر دو `CP-000R` و `CP-000E` مسدود است.
-4. `CP-000A`، `CP-000B`، `CP-000C` و `CP-000D` بسته شده‌اند و دیگر در انتظار verification یا merge نیستند.
+1. `CP-000E — Model Boundary, Integration, Audit and Threat Baseline` را review و merge کن.
+2. پس از acceptance آن، `CP-001 — Control Plane Contracts` را آغاز کن.
+3. `CP-000A`، `CP-000B`، `CP-000C`، `CP-000D` و `CP-000R` بسته شده‌اند و دیگر در انتظار verification یا merge نیستند.
+4. هیچ LiteLLM، Backend queue، Redis یا Admin Website implementation پیش از package owner مربوطه complete محسوب نمی‌شود.
