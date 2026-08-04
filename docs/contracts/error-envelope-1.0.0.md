@@ -1,10 +1,25 @@
 # ErrorEnvelope 1.0.0
 
-Status: proposed for local verification
+Status: Accepted and implemented as a bounded baseline
 Owner: Chat Runtime Error Boundary
 Schema identity: `urn:ai-assistant:contracts:error-envelope:1.0.0`
 JSON Schema dialect: `https://json-schema.org/draft/2020-12/schema`
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| Clarification and abstention are currently surfaced through this envelope. That is a deliberate **transitional** arrangement (audit finding C-005); clarification and abstention are legitimate answer outcomes, not errors | AI-002 with AI-006 |
+| `RouteDecision 1.0.0` already provides a terminal `deny` lane. An authorization deny happens before routing and reaches the caller as `UNAUTHORIZED`; a route or policy deny is `RouteDecision(lane="deny")` and reaches the caller as `POLICY_REJECTED`. What is missing is complete terminal handling of `RouteDecision(lane="deny")` in the bounded Runtime and the Walking Skeleton (`DEF-118`), not a contract field | AI-002 |
+| `UNAUTHORIZED` and `POLICY_REJECTED` must remain distinguishable and must never be collapsed into one generic failure, and no error message may leak the existence or metadata of unauthorized content | Unchanged rule |
 ## Purpose
 
 `ErrorEnvelope` is the single canonical internal representation of a failed or

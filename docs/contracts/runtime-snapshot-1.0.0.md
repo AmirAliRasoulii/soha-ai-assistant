@@ -1,10 +1,29 @@
 # RuntimeSnapshot 1.0.0
 
-Status: proposed for local verification
+Status: Accepted and implemented as a bounded baseline
 Owner: Chat Runtime Configuration Boundary
 Schema identity: `urn:ai-assistant:contracts:runtime-snapshot:1.0.0`
 JSON Schema dialect: `https://json-schema.org/draft/2020-12/schema`
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| `source_revision` names the **application** source revision, that is the deployed code revision. It is not a knowledge `SourceRevision`. The intended vNext rename is `application_source_revision` (audit finding G-014); this baseline changes no field name | CP-001 |
+| `index_snapshot` must be interpreted as a **logical aggregate `IndexSnapshot` manifest** referencing one or more eligible physical snapshots plus routing metadata, not a single physical build (audit findings G-017, NEW-005) | CP-006 |
+| `security_policy` is the **global** `SecurityPolicy` configuration artifact. It is not a per-source `VisibilityPolicyDefinition`, and it never carries per-source visibility (audit finding G-016) | CP-004 with CP-002 |
+| `RuntimeArtifactRef` has no namespace field, so artifact-id collisions across artifact families are not structurally prevented (audit findings G-015, NEW-006) | CP-001 with CP-004 |
+| `config_bundle` duplication versus the `ConfigurationRelease` manifest requires exact factory equivalence: the denormalized snapshot refs must match the release manifest exactly (audit findings G-018, NEW-007) | CP-004 with CP-006 |
+| `config_bundle` must be interpreted as the **exact `ConfigurationRelease` manifest reference** for the active release, `security_policy` as the **global runtime `SecurityPolicy`** configuration artifact, `index_snapshot` as the **logical aggregate `IndexSnapshot` manifest**, and `source_revision` as the **application / source-code revision**. The release-pinned `BuildArtifact` binds or verifies `application_version`, the application `source_revision`, and the `build_artifact` identity. Named `RuntimeSnapshot` artifact references must exactly match the active `ConfigurationRelease` manifest. `RuntimeSnapshot 1.0.0` does **not** itself enforce the future RuntimeSnapshotFactory resolution algorithm | CP-004 RuntimeSnapshotFactory |
+| `RuntimeSnapshot 1.0.0` permits at most **sixteen entries in `model_artifacts`** (at least one, unique) and at most **sixty-four effective `feature_flags`** (unique names). These are collection bounds on the snapshot; they are not sixteen named artifact reference fields, and they do not constrain the total number of artifact references inside a `ConfigurationRelease`. No CP-000D or CP-000R decision changes them | Unchanged constraint |
 ## Purpose
 
 RuntimeSnapshot records the exact effective application and AI configuration references that were
@@ -142,7 +161,8 @@ integrity
 
 This contract validates the format of the integrity metadata only. It does not compute, recompute,
 or verify the digest, and it adds no RFC 8785 dependency. Computation and verification belong to a
-trusted RuntimeSnapshotFactory delivered in the Walking Skeleton task.
+trusted RuntimeSnapshotFactory, which is owned by **CP-004 RuntimeSnapshotFactory** and was **not**
+delivered in the Walking Skeleton task.
 
 Explicitly:
 
@@ -333,7 +353,8 @@ RuntimeSnapshot 1.0.0 is closed.
 
 ## Deferred RuntimeSnapshotFactory responsibility
 
-A trusted RuntimeSnapshotFactory, delivered in the Walking Skeleton task, will:
+The trusted RuntimeSnapshotFactory is owned by **CP-004 RuntimeSnapshotFactory**. It was not delivered
+in the Walking Skeleton task and does not exist today. When implemented, it will:
 
 - collect the effective configuration references from trusted internal sources;
 - perform RFC 8785 canonicalization of `content.model_dump(mode="json")`;

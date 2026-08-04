@@ -1,6 +1,7 @@
 # CP-000D Configuration Catalog
 
-Status: Proposed for architect review (CP-000D; not accepted, no implementation authorized)
+Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Scope: operational companion to `ADR-CP-004`, `ADR-CP-005`, and `ADR-CP-006`. Tables only. No
 provider is selected, no numeric threshold is fixed, no typed contract is defined, and no benchmark
 or test result is asserted.
@@ -13,6 +14,27 @@ Companions:
 - `docs/adr/ADR-CP-002-membership-role-and-authorization-scope.md`
 - `docs/adr/ADR-CP-003-data-index-isolation-and-multi-node-retrieval.md`
 - `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`
+
+## CP-000R cross-reference
+
+This document was accepted as an architecture baseline by CP-000R at canonical commit `6477c1c`.
+CP-000R changed no decision in this document. It repaired the surrounding conflicts that made this
+document read inconsistently against its neighbours:
+
+| Conflict repaired by CP-000R | Where it is now canonical |
+| --- | --- |
+| Architecture document status versus Git state (audit finding C-007) | Status lines of all seven CP ADRs and all four CP matrices/catalogs |
+| Source role and approval conflict between CP-000A and CP-000B (audit finding C-001) | `docs/control-plane/CP-000B-source-lifecycle-matrix.md` is now the single canonical source-action matrix; CP-000A delegates to it |
+| Visibility policy binding ambiguity (audit finding C-002) | Pinned exact immutable policy revision, in `docs/adr/ADR-CP-002-membership-role-and-authorization-scope.md` |
+| Full repair ledger and remaining implementation gaps | `docs/control-plane/CP-000R-architecture-consistency-repair.md` |
+| Document authority and precedence | `docs/architecture/architecture-authority-manifest.md` |
+
+The v1 AI configuration administration model recorded here remains canonical: a **single System AI
+Administrator** holding `ai_configuration.manage`, with **no mandatory second human approver**, a
+**conditional** provider probe, `Save and Apply`, `ConfigurationRelease`, release-level rollback,
+`BuildArtifact`-bound provenance, and bounded Last-Known-Good that a known revoke or disable defeats.
+`APPROVED` does not imply approval by a second human. The superseded two-person v1 AI administration
+model is **not** reintroduced by CP-000R.
 
 ## Legend
 
@@ -42,7 +64,7 @@ Companions:
 | FeaturePolicy | capability enablement, chat attachment enablement, Official Search enablement, General Web Search enablement, emergency capability disable, rollout flags | `SYS-AI-ADMIN` | Yes | Denied | Cannot enable a platform-forbidden capability | `Save and Apply`, full release, `AUDIT`; cannot override a `SecurityPolicy` prohibition | CP-001, CP-009 |
 | SecurityPolicy (global runtime) | classification ceilings, capability prohibitions, cross-scope behavior, model data-classification allowance, residency constraints, audit policy refs, retention policy refs, emergency controls | `SYS-AI-ADMIN` | Yes, editable only within platform hard bounds | Denied | Cannot weaken a mandatory security invariant; a violation is rejected | `Save and Apply`, full release, `AUDIT`; a new revision need not be more restrictive than the previous one, and an emergency disable is never implicitly reversed; distinct from per-source visibility policy | CP-001, CP-009 |
 | Per-source VisibilityPolicyDefinition | visibility primitives per source revision | `ORG-ADMIN` within source authority | Yes, via source management | Not an AI override | Restricted to safe platform primitives | Source lifecycle per `ADR-CP-007` and `CP-000B` | CP-006, CP-009 |
-| Source approval authority | `source.review`, `source.approve`, `source.reject` | Central Source Approver | Yes, via source workflow | Cannot self-approve own upload | None | Approval precedes indexing eligibility; not an AI configuration action. In v1 `source.review` includes reading pending submissions from all departments for review, and does not independently grant access to unrelated active or restricted content outside the required review surface | CP-006, CP-009, reconciled in CP-000R |
+| Source approval authority | `source.review`, `source.approve`, `source.reject` | Central Source Approver | Yes, via source workflow | The same principal cannot approve a submission they created, authored, uploaded, or submitted | None | Business approval precedes `ACTIVE` eligibility; it is not an AI configuration action and does not replace technical gates. In v1 `source.review` includes reading pending submissions from all departments for review, and does not independently grant access to unrelated active or restricted content outside the required review surface | CP-006, CP-009, reconciled in CP-000R |
 | Credential material | secret value | `PLATFORM` Secret Manager | No, masked operations only | Denied | Secret-handling invariant | Create, rotate, revoke, masked read, bounded health probe; original value never returned | CP-008, CP-012 |
 
 ## 25.2 Artifact taxonomy table

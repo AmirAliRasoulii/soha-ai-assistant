@@ -1,6 +1,7 @@
 # ADR-CP-006: RuntimeSnapshotFactory, Cache, and Bounded Last-Known-Good
 
-Status: Proposed for architect review (CP-000D; not accepted, no implementation authorized)
+Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000D architecture package
 Owner: Control Plane / Runtime Configuration Resolution Baseline
 Scope: interpretation of `RuntimeSnapshot 1.0.0` fields, the conceptual `RuntimeSnapshotFactory`,
@@ -13,6 +14,27 @@ Companions:
 - `docs/adr/ADR-CP-004-configuration-artifact-taxonomy-ownership-and-precedence.md`
 - `docs/adr/ADR-CP-005-configuration-versioning-activation-and-rollback.md`
 - `docs/control-plane/CP-000D-configuration-catalog.md`
+
+## CP-000R cross-reference
+
+This document was accepted as an architecture baseline by CP-000R at canonical commit `6477c1c`.
+CP-000R changed no decision in this document. It repaired the surrounding conflicts that made this
+document read inconsistently against its neighbours:
+
+| Conflict repaired by CP-000R | Where it is now canonical |
+| --- | --- |
+| Architecture document status versus Git state (audit finding C-007) | Status lines of all seven CP ADRs and all four CP matrices/catalogs |
+| Source role and approval conflict between CP-000A and CP-000B (audit finding C-001) | `docs/control-plane/CP-000B-source-lifecycle-matrix.md` is now the single canonical source-action matrix; CP-000A delegates to it |
+| Visibility policy binding ambiguity (audit finding C-002) | Pinned exact immutable policy revision, in `docs/adr/ADR-CP-002-membership-role-and-authorization-scope.md` |
+| Full repair ledger and remaining implementation gaps | `docs/control-plane/CP-000R-architecture-consistency-repair.md` |
+| Document authority and precedence | `docs/architecture/architecture-authority-manifest.md` |
+
+The v1 AI configuration administration model recorded here remains canonical: a **single System AI
+Administrator** holding `ai_configuration.manage`, with **no mandatory second human approver**, a
+**conditional** provider probe, `Save and Apply`, `ConfigurationRelease`, release-level rollback,
+`BuildArtifact`-bound provenance, and bounded Last-Known-Good that a known revoke or disable defeats.
+`APPROVED` does not imply approval by a second human. The superseded two-person v1 AI administration
+model is **not** reintroduced by CP-000R.
 
 ## Existing contract and dependency boundary
 

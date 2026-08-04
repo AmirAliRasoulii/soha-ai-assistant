@@ -1,7 +1,7 @@
 # ADR-CP-002: Membership, Scoped Roles, and Authorization Scope
 
-Status: proposed for CP-000A architect review, revision R1 (not accepted, no implementation
-authorized)
+Status: Accepted architecture baseline (originated as CP-000A revision R1; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000A-R1 architecture package
 Owner: Control Plane / Authorization Scope Baseline
 Scope: authorization semantics for organizational knowledge sources. No database schema, ORM,
@@ -10,8 +10,10 @@ here.
 
 ## Repository-state note
 
-This revision makes no claim about branch names, commit identifiers, commit counts, or the
-commit status of any prior work package. Contract names are cited as design references and
+This document was accepted as an architecture baseline by CP-000R at canonical commit
+`6477c1c`. Acceptance covers the architecture decisions recorded here and does **not** claim
+that the authorization obligations below are implemented: see "Future authorization contract
+obligations". Contract names are cited as design references and
 must be re-confirmed against canonical HEAD before acceptance. In particular, this document
 does **not** claim that `SecurityPrincipalContext` models an anonymous actor; the
 `RequestActor` taxonomy below is a conceptual requirement whose realization is deferred to a
@@ -268,11 +270,15 @@ new primitives, a new index, or a new collection.
 V-3. Ordinary administrators may not author arbitrary executable predicates, scripts, or
 expression-language fragments. Composition is declarative and closed over Layer 1.
 
-V-4. Every protected source references exactly **one** active `VisibilityPolicyDefinition`
-revision at a time, plus a trusted security-scope reference used by the pre-filter.
+V-4. Every protected source references exactly **one** `VisibilityPolicyDefinition` revision at
+a time, plus a trusted security-scope reference used by the pre-filter. That reference is a
+**pinned exact immutable revision**, not a policy identity that follows the latest active
+revision. See "Pinned visibility policy binding".
 
 V-5. Changing a source's policy means binding a new approved revision. That rebinding is
-authorization-relevant and audited. Activated revisions are never edited in place.
+authorization-relevant and audited. Activated revisions are never edited in place, and rebinding
+never mutates an active `SourceRevision` in place: it requires a new immutable source revision or
+a future explicitly versioned and audited migration mechanism.
 
 V-6. Policies are never realized as one collection, index, partition, or namespace per role,
 group, principal, or node. Physical topology is not an authorization mechanism.
@@ -398,6 +404,113 @@ authorization-relevant and each audited.
 U-8. The complete source lifecycle -- revision, update, revoke, deletion, and the persistent
 document and official URL lifecycles -- is **not** designed here. It belongs to the next
 source-registry package.
+
+## Pinned visibility policy binding
+
+This closes the binding ambiguity recorded as audit finding C-002 and open decision OD-001. The
+accepted baseline is `PINNED_VISIBILITY_POLICY_REVISION`.
+
+```text
+approved/active SourceRevision
+    └── visibility_policy_ref -> exact immutable VisibilityPolicyDefinition revision
+```
+
+B-1. Each approved or active `SourceRevision` references the exact immutable
+`VisibilityPolicyDefinition` revision that is used for authorization. The consulted revision is
+deterministic and reproducible for that source revision.
+
+B-2. There is **no implicit follow-latest**. A policy identity that silently tracks whichever
+revision is currently active is rejected, because it would let a policy edit change the
+authorization outcome of already-approved content without an audited rebinding.
+
+B-3. No model-selected policy revision. An LLM never resolves, chooses, or infers which policy
+revision applies.
+
+B-4. No client-selected active revision. A request, header, cookie, or client parameter never
+selects which policy revision authorizes a read.
+
+B-5. A missing policy revision fails closed: deny, and draft-only for unpublished content.
+
+B-6. An inactive or revoked policy revision makes the source **ineligible**. Eligibility is not
+recomputed against some newer revision as a convenience; it fails closed until an explicit,
+audited rebinding happens.
+
+B-7. Authorization records and audit records carry the exact policy revision that was consulted,
+so a past decision can be explained against the policy text that actually produced it.
+
+B-8. Changing the policy binding must not mutate an active `SourceRevision` in place. It requires
+a new immutable source revision, or a future explicitly versioned and audited bulk migration
+mechanism (see `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`).
+
+B-9. Emergency policy revocation invalidates the affected source eligibility immediately. A
+revoked policy revision never remains effective merely because a source revision still points at
+it.
+
+B-10. The exact open race is: **retrieval succeeds, then the source or its visibility policy is
+revoked, before finalization and publication.** This is not a difference between
+authorization-decision time and retrieval time, and it must not be restated as one. The required
+future behaviour is a **deterministic current-eligibility and revocation recheck before final answer
+publication**. This recheck does not exist today; it is owned by AI-007 with CP-006 and tracked as
+`DEF-113`.
+
+## Future authorization contract obligations
+
+These are **obligations on future contracts**, recorded so that a later package cannot quietly
+omit them. None of them is implemented today. The current typed contracts in
+`src/ai_assistant/contracts/security.py` provide `SecurityPrincipalContext`,
+`AuthorizationResourceRef`, and `AuthorizationDecision`, and they do not contain the complete
+production authorization envelope described here.
+
+O-1. A future `AuthorizationRequest` must exist and must be bound to its `AuthorizationDecision`
+with exact verification, covering at minimum:
+
+```text
+decision.action        == request.action
+decision.resource      == request.resource
+decision.organization  == request.organization
+decision not expired
+decision consulted policy revisions are valid
+```
+
+O-2. Decision expiry must be enforced, not merely represented. An expired decision is not a weak
+allow; it is a deny.
+
+O-3. A decision must carry the refs of the policy revisions actually consulted (B-7), and the
+authorized security-scope refs that the retrieval pre-filter is allowed to use.
+
+O-4. Action authorization and retrieval scope resolution are **separate but bound** concerns:
+
+```text
+AuthorizationDecision
+    -> permission for one action on one resource
+
+RetrievalAuthorizationEnvelope
+    -> the exact authorized retrieval scopes and the consulted policy revisions
+```
+
+A future `RetrievalAuthorizationEnvelope` must carry `organization_ref`,
+`authorized_security_scope_refs`, `consulted_policy_revision_refs`, and the decision expiry. The
+mandatory pre-filter is built from that envelope and from nothing else.
+
+O-5. Guest is a **first-class future principal mode**, not a fake user and not an authentication
+failure. A future contract must be able to represent an anonymous request actor explicitly.
+
+O-6. Authentication failure never becomes Guest. A failed authentication is an error, not a
+downgrade to anonymous access.
+
+O-7. A missing policy never becomes `anonymous-public`. Absence is deny (V-7, B-5).
+
+O-8. The global runtime `SecurityPolicy` carried in `RuntimeSnapshot` is **not** the same thing as
+a per-source `VisibilityPolicyDefinition`. The former is one platform-wide runtime security policy
+artifact; the latter is per-source authorization policy whose consulted revisions are recorded in
+the decision and the envelope. Conflating them is an error.
+
+O-9. Role labels, frontend labels, display names, and model output never authorize. Only a trusted
+decision produced by the policy layer authorizes.
+
+O-10. Ownership of these contracts: CP-001 owns the organization, node, membership, and Guest
+actor shapes; CP-002 owns `AuthorizationRequest`, exact binding, expiry enforcement, and
+`RetrievalAuthorizationEnvelope`. This ADR adds no field to any existing 1.0.0 contract.
 
 ## Query-time authorization path
 
@@ -558,13 +671,15 @@ including how a guest request is represented, is a future package.
 | Exact role catalog | Baseline defines conceptual roles only; the catalog must be versioned with concrete actions | Control-plane role catalog package | Confirmed operating models per deployment type |
 | Exact action catalog | Matrix actions are conceptual and must be reconciled with real control-plane operations | Same catalog package | Approved control-plane operation list |
 | Exact classification taxonomy, including the platform-approved public classification code | Guests depend on a single approved public code; the wider taxonomy is not approved | Classification package | Regulatory and organizational sensitivity requirements per deployment |
-| Exact policy authoring, approval, and activation workflow | Delegated authority model is not approved; two-person approval requirements are unresolved | Control-plane policy governance package | Risk assessment, audit requirements, staffing reality |
-| Two-person approval and self-review requirements | Whether an author may review or approve their own submission depends on governance and regulatory obligations | Same governance package | Regulatory obligations, staffing reality, and incident/risk analysis |
+| Exact policy authoring, approval, and activation workflow | The accepted v1 AI-configuration and central-source-approval workflows are fixed; configurable separation-of-duties rules for other or future actions remain unresolved | Control-plane policy governance package | Risk assessment, audit requirements, staffing reality |
+| Separation of duties beyond the v1 self-approval prohibition | v1 already forbids the same principal from approving a source submission they created, authored, uploaded, or submitted. Additional two-person or cross-role rules remain governance-dependent | Same governance package | Regulatory obligations, staffing reality, and incident/risk analysis |
 | Hard platform bounds on policy size and clause count | Bounds must exist and must not be weakenable, but the numbers need evidence | Control-plane limits package | Measured evaluation cost and realistic policy shapes |
 | Membership synchronization mechanism | Depends on the unselected IdP; manual versus synchronized changes the trust model | Identity/adapter package | Selected IdP export capability, expected churn |
 | Node lifecycle and status states | Owned by ADR-CP-001 and unresolved there | Control-plane node lifecycle package | Reorganization and retention scenarios |
 | Physical index backend and topology | Explicitly out of scope; must not become an authorization mechanism | Retrieval/index package | Scale, latency, and cost requirements |
 | Legal retention requirements for decisions and audit records | Jurisdiction and deployment dependent | Compliance package | Legal review per deployment type |
 | Deployment topology and organization provisioning | Single-organization start is a target, not a decided topology | Platform/deployment package | Hosting and tenancy requirements |
-| Guest request representation in typed contracts | This package adds no contract, and no claim is made about existing contract shapes | Future CP contract package | Architect acceptance of this ADR |
+| Guest request representation in typed contracts | Recorded as a first-class future principal mode (O-5); no typed contract exists yet | CP-001 | Architect acceptance of this ADR |
+| Exact `AuthorizationRequest` and `RetrievalAuthorizationEnvelope` shapes | CP-000R records the obligations (O-1 to O-4); the typed shapes, field names, and expiry representation are undecided | CP-002 | Approved authorization operation list and retrieval scope model |
+| Versioned audited bulk policy-rebinding migration mechanism | Pinned binding (B-1) makes bulk rebinding an explicit operation; its shape and audit record are undecided | CP-002, CP-005 | Real migration scenarios and audit obligations |
 | Personal/transactional/clinical record authorization | Declared a non-goal here; requires its own inputs and capabilities | Clinical/transactional records package | Clinical governance requirements, purpose-of-use rules, legal review |

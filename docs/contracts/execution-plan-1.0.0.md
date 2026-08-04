@@ -1,11 +1,27 @@
 # ExecutionPlan 1.0.0
 
-- Status: proposed for local verification
+- Status: Accepted and implemented as a bounded baseline
 - Owner: Plan Construction and Validation Boundary
 - Schema dialect: https://json-schema.org/draft/2020-12/schema
 - Schema identifier: urn:ai-assistant:contracts:execution-plan:1.0.0
 - Artifact: schemas/execution-plan/1.0.0.schema.json
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| Plan construction and validation are deterministic and bounded. The plan carries no authorization authority: a validated plan never widens retrieval scope | Unchanged rule |
+| No typed `RetrievalAuthorizationEnvelope` exists, so the mandatory pre-filter inputs are not yet contractually carried through the plan (audit finding G-005) | CP-002 with AI-003 |
+| No typed step-level binding to a pinned visibility policy revision or to the Mandatory Isolation Metadata Subset | CP-001 with CP-006 |
+| The implemented 0/1 plan-revision rules are canonical. Architecture examples cannot override the typed contract. Policy-stability evaluation and bounded-replan evaluation remain deferred | AI-002 Adaptive Routing and Bounded Planning |
 ## Purpose
 
 ExecutionPlan is the immutable, validated and bounded description of intended

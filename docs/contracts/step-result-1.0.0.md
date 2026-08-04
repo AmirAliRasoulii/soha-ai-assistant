@@ -1,6 +1,6 @@
 # StepResult 1.0.0
 
-Status: proposed for local verification
+Status: Accepted and implemented as a bounded baseline
 
 Owner: Capability Execution Boundary
 
@@ -8,6 +8,21 @@ Schema identity: `urn:ai-assistant:contracts:step-result:1.0.0`
 
 JSON Schema dialect: `https://json-schema.org/draft/2020-12/schema`
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| Capability execution results carry no authorization decision of their own. A successful step never implies the retrieved units were eligible; eligibility is decided before retrieval | Unchanged rule |
+| No typed evidence-eligibility validator exists, so per-unit eligibility is not yet contractually re-verified at this boundary (audit finding G-007). The future deterministic validation must cover authorized scope membership, organization, classification ceiling, source active state, source revision eligibility, source digest, effective time, authority, the `SUPERSEDES` / `SUPPLEMENTS` relation, and current revocation state | AI-003 with AI-006 |
+| Post-retrieval checks remain defense in depth only; their absence never widens a filter | Unchanged rule |
 ## Purpose
 
 `StepResult` is the immutable, validated result envelope produced after one

@@ -1,6 +1,7 @@
 # ADR-CP-004: Configuration Artifact Taxonomy, Ownership, and Precedence
 
-Status: Proposed for architect review (CP-000D; not accepted, no implementation authorized)
+Status: Accepted architecture baseline (originated as CP-000D; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000D architecture package
 Owner: Control Plane / Configuration Ownership Baseline
 Scope: which configuration exists, who owns each part, what the Admin Website may change, and
@@ -12,6 +13,27 @@ Companions:
 - `docs/adr/ADR-CP-005-configuration-versioning-activation-and-rollback.md`
 - `docs/adr/ADR-CP-006-runtime-snapshot-factory-cache-and-lkg.md`
 - `docs/control-plane/CP-000D-configuration-catalog.md`
+
+## CP-000R cross-reference
+
+This document was accepted as an architecture baseline by CP-000R at canonical commit `6477c1c`.
+CP-000R changed no decision in this document. It repaired the surrounding conflicts that made this
+document read inconsistently against its neighbours:
+
+| Conflict repaired by CP-000R | Where it is now canonical |
+| --- | --- |
+| Architecture document status versus Git state (audit finding C-007) | Status lines of all seven CP ADRs and all four CP matrices/catalogs |
+| Source role and approval conflict between CP-000A and CP-000B (audit finding C-001) | `docs/control-plane/CP-000B-source-lifecycle-matrix.md` is now the single canonical source-action matrix; CP-000A delegates to it |
+| Visibility policy binding ambiguity (audit finding C-002) | Pinned exact immutable policy revision, in `docs/adr/ADR-CP-002-membership-role-and-authorization-scope.md` |
+| Full repair ledger and remaining implementation gaps | `docs/control-plane/CP-000R-architecture-consistency-repair.md` |
+| Document authority and precedence | `docs/architecture/architecture-authority-manifest.md` |
+
+The v1 AI configuration administration model recorded here remains canonical: a **single System AI
+Administrator** holding `ai_configuration.manage`, with **no mandatory second human approver**, a
+**conditional** provider probe, `Save and Apply`, `ConfigurationRelease`, release-level rollback,
+`BuildArtifact`-bound provenance, and bounded Last-Known-Good that a known revoke or disable defeats.
+`APPROVED` does not imply approval by a second human. The superseded two-person v1 AI administration
+model is **not** reintroduced by CP-000R.
 
 ## Existing contract and dependency boundary
 
@@ -251,7 +273,8 @@ conflated: authorized department users upload or register a source and submit it
 centrally assigned Source Approver holding `source.review`, `source.approve`, and `source.reject`
 reviews submissions from all departments; only approved content becomes eligible for activation and
 indexing. Department users may hold `source.create`, `source.upload`, `source.edit_own_draft`, and
-`source.submit`, and cannot approve their own content merely because they uploaded it. This ADR does
+`source.submit`. The same principal must not approve a submission they created, authored, uploaded,
+or submitted; holding `source.approve` does not override that v1 prohibition. This ADR does
 not redesign `ADR-CP-007` or `CP-000B`; reconciliation is owned by `CP-000R`.
 
 ```text

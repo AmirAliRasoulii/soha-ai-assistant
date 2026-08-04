@@ -1,11 +1,26 @@
 # TurnInput 1.0.0
 
 - Owner: Chat Runtime
-- Status: proposed for local verification
+- Status: Accepted and implemented as a bounded baseline
 - Schema version: 1.0.0
 - Schema id: urn:ai-assistant:contracts:turn-input:1.0.0
 - Artifact: schemas/turn-input/1.0.0.schema.json
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| `TurnInput 1.0.0` intentionally carries **no identity and no authorization**. It does not carry a `SecurityPrincipalContext`. Trusted principal resolution and authorization binding occur in the runtime context and in the separate versioned security contracts. A first-class typed anonymous Guest principal does not exist yet (audit finding G-006), and Guest must never be represented through a fabricated `TurnInput` user identity | CP-001 with CP-002 |
+| No typed binding to a pinned `VisibilityPolicyDefinition` revision or to an authorization request identifier | CP-001 |
+| Client-supplied fields are untrusted input. Nothing on a turn input authorizes anything; authorization is resolved by the authorization layer only | Unchanged rule |
 ## Purpose
 
 TurnInput is the immutable, validated input handed to the Chat Runtime after transport-level parsing. It carries the user message and the identifiers needed to correlate one turn. It carries no identity, authorization, security policy, normalized query text, provider objects, or model output.

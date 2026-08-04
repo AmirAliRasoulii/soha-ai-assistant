@@ -1,7 +1,7 @@
 # ADR-CP-001: Organization and OrganizationalNode Hierarchy
 
-Status: proposed for CP-000A architect review, revision R1 (not accepted, no implementation
-authorized)
+Status: Accepted architecture baseline (originated as CP-000A revision R1; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000A-R1 architecture package
 Owner: Control Plane / Authorization Scope Baseline
 Scope: conceptual domain model only. No database schema, ORM, API, admin surface, or
@@ -9,10 +9,13 @@ identity-provider integration is decided here.
 
 ## Repository-state note
 
-This revision makes no claim about branch names, commit identifiers, commit counts, or the
-commit status of any prior work package. Contract names referenced below are cited as design
-references and must be re-confirmed against canonical HEAD before acceptance. No statement
-in this document depends on a particular Git history.
+This document was accepted as an architecture baseline by CP-000R at canonical commit
+`6477c1c`, and the contract names referenced below were re-confirmed against that commit.
+Acceptance covers the architecture decisions recorded here. It does not claim that any of them
+is implemented in Python code, JSON Schema, or persistence: no organization, node, membership,
+or node-lifecycle contract exists in the repository yet. Implementation ownership is recorded
+under "Explicitly open decisions" and in
+`docs/control-plane/CP-000R-architecture-consistency-repair.md`.
 
 ## Context
 
@@ -71,7 +74,7 @@ contracts; they define the vocabulary that future typed contracts must realize.
 | `OrganizationalNode` | entity | One structural unit inside one organization | Identity, `NodeType`, optional parent, status |
 | `NodeType` | value object | Dynamic versioned classification code: faculty, department, office, laboratory, ward, clinical-unit, team, project, custom | Vocabulary term only; grants nothing |
 | `HierarchyPathRef` | value object | Derived, trusted ancestor chain of a node within its organization, of bounded length | Derived by the control plane, never client-supplied; used by `subtree-member` evaluation |
-| `NodeStatus` | value object (open) | Lifecycle state of a node | Minimally proposed; not finalized in this package |
+| `NodeStatus` | value object | Minimum authorization-relevant lifecycle state of a node: `ACTIVE` or `NON_ACTIVE` | Only these two states are authorization-relevant. Archival, deletion, and root-retirement mechanics remain deferred (see "Node lifecycle and structural change") |
 | `NodeDisplayName` | value object | Human-facing label | Explicitly excluded from authorization inputs |
 | `RequestActor` | conceptual taxonomy | Either `AnonymousGuest` or `AuthenticatedPrincipal` | Defined in ADR-CP-002; referenced here because node-scoped concepts apply only to authenticated principals |
 
@@ -104,7 +107,13 @@ Associations owned by ADR-CP-002, shown only for orientation:
 I-1. Every `OrganizationalNode` belongs to exactly one organization, and that binding is
 immutable for the life of the node.
 
-I-2. A node has at most one parent. The organization root node has no parent.
+I-2. Every organization has **exactly one** root node. The root node has no parent. Every
+non-root node has exactly one parent. A second parentless node inside one organization is
+invalid structural input, not a policy question.
+
+I-2a. The root node can never be re-parented. A root node is not a valid move target and is not
+a valid move subject. An operation that would give the root a parent, or would move another node
+above it, fails closed as invalid input.
 
 I-3. A node's parent must belong to the same organization. Cross-organization parenting is
 invalid input, not a policy question.
@@ -130,6 +139,57 @@ auditable. Move mechanics are a control-plane concern, not decided here.
 I-9. Anonymous readability is never a property of a node or of the hierarchy. It exists only
 as an active visibility policy on a specific resource. A node is never "a public node" in a
 way that makes its future resources readable by guests.
+
+## Node lifecycle and structural change
+
+This section fixes the minimum authorization-relevant node lifecycle. It deliberately does not
+invent a complete persistence model, an admin surface, or an archival workflow.
+
+L-1. A node is either `ACTIVE` or `NON_ACTIVE`. These are the only two states that authorization
+semantics depend on. Any richer state set a future package introduces must map onto these two for
+authorization purposes.
+
+L-2. Only an `ACTIVE` node may create new authorization scope. Membership, scoped-role
+assignment, and `subtree-member` breadth are evaluated against active nodes.
+
+L-3. A `NON_ACTIVE` node grants **no new access**. Making a node non-active is a narrowing
+operation, never a widening one. A non-active node is not a wildcard and not a bypass.
+
+L-4. Deactivating a node does not retroactively create implicit access anywhere else. The
+forbidden implications in "Default-deny hierarchy semantics" continue to hold in every node
+state: no parent, child, or sibling access appears because a node became non-active.
+
+L-5. Moving or re-parenting a node is an authorization-relevant operation, because it re-derives
+`HierarchyPathRef` and therefore changes `subtree-member` outcomes (I-8).
+
+L-6. A move or re-parent requires explicit authorization and produces an audit record. It is
+never a silent structural edit and never a side effect of renaming or of a type change.
+
+L-7. After a move, every derived `HierarchyPathRef`, scope cache, and pre-filter cache affected
+by the moved subtree must be invalidated. A stale cached path is a silent authorization defect:
+until invalidation completes, the safe behavior is to fail closed rather than serve a stale path.
+
+L-8. Historical audit records retain the **historical** node and path reference that was in force
+when the recorded decision was made. Audit history is never rewritten to match the current
+structure, because that would destroy the ability to explain a past decision.
+
+L-9. Root deletion and archive mechanics remain deferred. This package fixes only that the root
+exists, is unique, and cannot be re-parented.
+
+## Node metadata publication
+
+P-1. Node metadata is **default deny**. There is no public node directory in this baseline.
+
+P-2. An End User's access to node-directory information requires an explicit publication or
+directory policy. Authenticated membership somewhere in the organization does not by itself
+entitle a principal to enumerate the organization's structure.
+
+P-3. Guest (`AnonymousGuest`) node metadata is denied. A future explicit publication contract may
+allow specific published node metadata; until that contract exists, the answer is deny.
+
+P-4. Publication of node metadata, if it is ever allowed, is an explicit versioned policy
+decision on specific metadata, exactly as resource publication is (I-9). It is never a structural
+property of a node and never inherited by the node's resources.
 
 ## Bounded depth
 
@@ -264,8 +324,8 @@ Worked consequences of the invariants:
 | Open decision | Why it remains open | Which package should decide | Evidence required |
 |---|---|---|---|
 | Exact hard maximum hierarchy depth and path-size bound | No operational evidence exists yet; the invariant (bounded, platform-owned, non-weakenable) is decided, the number is not | Control-plane structural limits package | Real organizational depths across university/company/hospital deployments, and measured path-evaluation cost at candidate depths |
-| `NodeStatus` lifecycle states | No canonical source approves a state set. Minimal proposal: an active state plus a non-active state that fails closed for new access; archival/deletion unresolved | Control-plane node lifecycle package | Reorganization scenarios, retention obligations, whether historical evidence stays readable after retirement |
-| Node move and re-parenting semantics | Interacts with `subtree-member` predicates, audit history, and previously granted access | Same lifecycle package | Real reorganization scenarios and audit/retention requirements |
+| Full `NodeStatus` lifecycle beyond `ACTIVE`/`NON_ACTIVE`, including archival, deletion, and root retirement | CP-000R fixes the two authorization-relevant states and their fail-closed semantics; the wider lifecycle, archival mechanics, and root retirement remain undecided | CP-001 (typed contracts), control-plane node lifecycle package | Reorganization scenarios, retention obligations, whether historical evidence stays readable after retirement |
+| Exact node move and re-parenting mechanics | CP-000R fixes the obligations (explicit authorization, audit record, cache/path invalidation, historical audit retention, root immovable); the operational mechanics, bulk-move behavior, and invalidation protocol remain undecided | CP-001, control-plane node lifecycle package | Real reorganization scenarios and audit/retention requirements |
 | `NodeType` vocabulary contents and versioning rules | Requires the three deployment vocabularies to be confirmed by their owners | Control-plane vocabulary package | Confirmed unit taxonomies per deployment type |
 | Node metadata beyond identity, type, parent, status | Unbounded without concrete admin requirements | Control-plane admin package | Approved admin surface requirements |
 | Whether any node metadata may be published to anonymous guests, and how | Guest node-metadata access is denied by default in R1; a publication path may be wanted later | Control-plane publication package | Concrete public-directory requirements per deployment |

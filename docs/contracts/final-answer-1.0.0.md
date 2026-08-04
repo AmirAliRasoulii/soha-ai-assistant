@@ -1,5 +1,23 @@
 # FinalAnswer Contract 1.0.0
 
+Status: Accepted and implemented as a bounded baseline
+
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| Citations must resolve only citation-safe published source metadata. Management metadata, administrative owner identity, review state, internal locators, and lifecycle audit detail must never appear in a rendered answer (audit finding C-003) | CP-001 with CP-009 |
+| Historical citation resolvability is required: a superseded revision remains resolvable for an existing citation even though it is excluded from current retrieval | CP-005 with CP-006 |
+| Semantic claim validation is structural in this baseline. The required future validation is deterministic numeric checks, semantic faithfulness and entailment checking, unsupported-claim rejection, bounded repair, and safe abstention or fallback (audit finding G-010) | AI-007 |
+| No deterministic current-eligibility and revocation recheck runs before publication, so a source or policy revoked after successful retrieval but before finalization is not detected (audit finding G-011). This recheck is not implemented today | AI-007 with CP-006 |
 ## 1. Purpose
 
 `FinalAnswer` is the single successfully finalized answer artifact produced by the AI Core.

@@ -1,11 +1,31 @@
 # Evidence and EvidenceBundle 1.0.0
 
-- Status: proposed for local verification
+- Status: Accepted and implemented as a bounded baseline
 - Owner: Evidence Normalization and Sufficiency Boundary
 - Schema identity: `urn:ai-assistant:contracts:evidence:1.0.0`
 - Dialect: JSON Schema Draft 2020-12
 - Artifact: `schemas/evidence/1.0.0.schema.json`
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| `_EvidenceBase` already carries `authority` as a controlled canonical code, so evidence is not authority-blind. What is missing is the **binding of that code to trusted Source Registry authority metadata**: `authority_class_ref`, `issuer_ref` / `authority_ref`, and `authority_assignment_policy_ref`. Until that binding exists, deterministic conflict precedence is not contractually expressible (audit finding G-001, re-scoped by CP-000R against the committed contract) | CP-001 with CP-005 |
+| Typed temporal metadata already exists: `EvidenceValidityWindow` carries `as_of`, `valid_from`, and `valid_to`, and `EvidenceSourceTime` carries `observed_at` and `published_at`, with ordering validation. What is missing is that these values are **not yet deterministically derived from, and revalidated against**, `SourceRevision.effective_from`, `SourceRevision.valid_until`, and the current Source Registry lifecycle state (audit finding G-002, re-scoped by CP-000R against the committed contract) | CP-001 with CP-005 |
+| `SourceRelationship` is not represented in the current contract, so `SUPERSEDES` (within one `KnowledgeSource`) and `SUPPLEMENTS` (across separate `KnowledgeSource` records) are not expressible here. An LLM must never infer these relationships | CP-005 |
+| The revocation race is not addressed. Retrieval may succeed and the source or its visibility policy may then be revoked before finalization and publication; no deterministic current-eligibility and revocation recheck before final answer publication exists (audit finding G-011). This recheck is not implemented today | AI-007 with CP-006 |
+| No evidence content resolver exists: Evidence carries references and opaque locators only and cannot resolve them, so bounded trusted content resolution with citation-safe display metadata and historical-revision resolvability is future work (audit finding G-009, `DEF-111`) | AI-007 primary, with CP-006 as the source and index lifecycle dependency and CP-012 as the production adapter dependency |
+| No semantic or numeric claim validation contract exists: deterministic numeric checks, semantic faithfulness and entailment checking, unsupported-claim rejection, bounded repair, and safe abstention or fallback are future work (audit finding G-010, `DEF-112`) | AI-007 primary, with CP-013 Evaluation and Rollout Gates for evaluation and rollout support |
+| No deterministic per-unit eligibility validator exists. The complete future eligibility check must cover authorized scope membership, organization, classification ceiling, source active state, source revision eligibility, source digest, effective time, authority, `SUPERSEDES` / `SUPPLEMENTS` relationships, and current revocation state (audit finding G-007, `DEF-109`) | AI-003 with AI-006 |
+| Citation metadata must remain restricted to `CitationSafePublishedSourceMetadata`; management and lifecycle audit metadata must never leak into citations (audit finding C-003) | CP-001 with CP-009 |
 ## Purpose
 
 Evidence 1.0.0 defines the normalized, validated evidence records produced from accepted

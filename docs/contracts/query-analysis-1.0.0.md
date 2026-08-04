@@ -1,11 +1,27 @@
 # QueryAnalysis 1.0.0
 
-- Status: proposed for local verification
+- Status: Accepted and implemented as a bounded baseline
 - Owner: Query Understanding Boundary
 - Schema identifier: `urn:ai-assistant:contracts:query-analysis:1.0.0`
 - JSON Schema dialect: `https://json-schema.org/draft/2020-12/schema`
 - Artifact: `schemas/query-analysis/1.0.0.schema.json`
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| Represents query understanding only. It carries no authorization scope, and model output here never widens retrieval | Unchanged rule |
+| No typed representation of an explicit historical-version query, which source supersession semantics will require (ADR-CP-007, `SUPERSEDES`) | CP-001 with CP-005 |
+| No typed temporal intent binding to trusted `effective_from` / `valid_until` metadata | CP-001 |
+| Conversation-context provenance, standalone-query provenance, and resolved-reference provenance are not represented here and remain future work | AI-001 Conversation Context and Persian Understanding |
 ## Purpose
 
 QueryAnalysis is the immutable, validated set of structured query features produced at the

@@ -1,6 +1,6 @@
 # SecurityPrincipalContext 1.0.0 and AuthorizationDecision 1.0.0
 
-- Status: proposed for local verification
+- Status: Accepted and implemented as a bounded baseline
 - Owners: Identity Adapter (SecurityPrincipalContext), Authorization Policy Layer (AuthorizationDecision)
 - Schema ids:
   - urn:ai-assistant:contracts:security-principal-context:1.0.0
@@ -8,6 +8,32 @@
 - Artifacts:
   - schemas/security-principal-context/1.0.0.schema.json
   - schemas/authorization-decision/1.0.0.schema.json
+
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| `SecurityPrincipalContext` represents an authenticated principal. A first-class typed anonymous Guest principal does not exist in 1.0.0 (audit finding G-006), and authentication failure must never be downgraded into Guest | CP-002 |
+| There is no typed `AuthorizationRequest`, so the request-to-decision binding, decision expiry enforcement, consulted-policy reference, and authorized-scope reference are not contractually carried (audit finding G-004) | CP-001 with CP-002 |
+| There is no typed `RetrievalAuthorizationEnvelope` separating the authorization decision from the trusted retrieval filter inputs (audit finding G-005) | CP-002 with AI-003 |
+| `AuthorizationDecision` carries `policy_version`; it does not yet carry a pinned `VisibilityPolicyDefinition` revision reference | CP-002 |
+| The revocation race is not addressed. The exact finding is that retrieval succeeds, and the source or its visibility policy is then revoked, before finalization and publication. The required future behaviour is a deterministic current-eligibility and revocation recheck before final answer publication. This is not a difference between authorization-decision time and retrieval time, and it is not implemented today (audit finding G-011) | AI-007 with CP-006 |
+| Role labels, frontend labels, display names, and model output never authorize | Unchanged rule |
+## Trust boundary
+
+| Layer | Responsibility |
+| --- | --- |
+| Backend / Identity / Policy adapter | Authentication, trusted identity resolution, and membership and policy evaluation |
+| AI Core | Receives provider-neutral trusted security inputs only, and makes no authentication or membership decision |
+| Django models, sessions, request objects, and ORM state | **Never enter AI Core** in any form |
 
 ## Purpose
 

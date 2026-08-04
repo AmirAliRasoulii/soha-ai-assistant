@@ -1,8 +1,24 @@
 # AnswerPlan 1.0.0
 
-Status: proposed for local verification
+Status: Accepted and implemented as a bounded baseline
 Owner: Answer Planning Boundary
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| Answer planning consumes evidence but grants no authorization. A plan never adds a source that authorization did not already permit | Unchanged rule |
+| No minimal typed `GenerationRequest` boundary exists between planning and generation (audit finding G-008). The future generator input must carry only the sanitized question, approved claims, approved caveats, bounded authorized evidence content, answer constraints, and response locale, and must never receive the full `RuntimeContext`, the full principal, roles or groups, the `AuthorizationDecision`, raw source-management metadata, or provider credentials | AI-007 |
+| Evidence already carries `authority` as a controlled code and typed validity and source-time windows. Authority-driven conflict precedence and caveat generation are still not contractually expressible, because that code is not yet bound to trusted Source Registry authority metadata and the temporal values are not yet revalidated against `SourceRevision` state | AI-007 with CP-005 |
+| Semantic claim validation is not yet contractual. The required future validation is deterministic numeric checks, semantic faithfulness and entailment checking, unsupported-claim rejection, bounded repair, and safe abstention or fallback (audit finding G-010) | AI-007 |
 ## Purpose
 
 AnswerPlan is the immutable, validated semantic plan used to generate exactly

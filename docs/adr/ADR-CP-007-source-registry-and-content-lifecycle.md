@@ -1,6 +1,7 @@
 # ADR-CP-007: Source Registry and Content Lifecycle
 
-Status: proposed for CP-000B architect review (not accepted, no implementation authorized)
+Status: Accepted architecture baseline (originated as CP-000B; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000B architecture package
 Owner: Control Plane / Source Registry Baseline
 Scope: conceptual model and lifecycle for persistent knowledge sources only. No typed contract,
@@ -162,6 +163,13 @@ Conceptual fields (at minimum):
 | `approved_at` / `approved_by_principal_ref` | Approval facts, absent until approved |
 | `activated_at` / `activated_by_principal_ref` | Activation facts, absent until activated |
 | `supersedes_revision_ref` | The revision this one displaced at activation, if any |
+| `effective_from` | Trusted business effective time of this revision. See "Source temporal metadata" |
+| `valid_until` | Nullable trusted end of business validity; null means open-ended |
+| `published_at` | Optional business publication time; may be unknown |
+| `observed_at` | Trusted fetch/ingestion observation time |
+| `authority_class_ref` | Trusted authority classification reference. See "Source authority" |
+| `issuer_ref` | Trusted reference to the issuing body or authority for this revision |
+| `authority_assignment_policy_ref` | The versioned policy revision under which authority was assigned or confirmed |
 
 R-1. Exactly one content locator is present per revision, determined by `source_type`:
 `content_artifact_ref` for `uploaded_document`, `official_url_ref` for `official_url`. Both
@@ -180,6 +188,25 @@ classification, and digest. Change means a new revision.
 R-5. Every revision binds exactly one visibility policy revision and one classification. A
 revision without a policy binding cannot leave draft.
 
+R-5A (pinned visibility policy revision). `visibility_policy_ref` is a **pinned exact immutable
+`VisibilityPolicyDefinition` revision**, not a policy identity that follows whichever revision is
+currently active. There is no follow-active behavior in v1:
+
+```text
+no implicit follow-latest
+no model-selected policy revision
+no client-selected active revision
+missing policy revision      -> fail closed (deny, draft-only)
+inactive or revoked revision -> source ineligible
+```
+
+Authorization and audit records carry the exact consulted policy revision. Changing the binding
+never mutates an active `SourceRevision` in place: it requires a new immutable source revision, or a
+future explicitly versioned and audited migration mechanism. Emergency policy revocation invalidates
+the affected source eligibility immediately. Full semantics are in
+`docs/adr/ADR-CP-002-membership-role-and-authorization-scope.md` under "Pinned visibility policy
+binding".
+
 R-6. `content_digest` is trusted metadata. For `uploaded_document` it covers the managed
 content payload; for `official_url` it covers the normalized registered-URL revision payload.
 Digesting fetched webpage content belongs to the future ingestion package. A revision whose
@@ -187,6 +214,153 @@ immutable payload does not match its digest is ineligible, not repaired at read 
 
 R-7. Approval and activation facts are recorded separately, by potentially different principals,
 because the two permissions are distinct.
+
+## Source authority
+
+Authority answers "how authoritative is this source", which is a different question from "who may
+read it". It exists because evidence-based answering needs deterministic conflict precedence, and
+because a model must never invent that precedence itself.
+
+Conceptual trusted authority metadata:
+
+```text
+authority_class_ref                 trusted authority classification
+issuer_ref (or authority_ref)       the issuing body or authority
+authority_assignment_policy_ref     the versioned policy under which authority was assigned
+```
+
+AU-1. A contributor **may propose** authority metadata when creating or editing a draft. A proposal
+is a request, not a fact (U-4).
+
+AU-2. The Central Source Approver confirms the proposed authority, or assigns it from an approved
+versioned catalog. Authority becomes trusted only through that workflow.
+
+AU-3. Authority values supplied by an LLM, a client, a filename, or document text are **untrusted**
+and may never be persisted as trusted authority metadata.
+
+AU-4. Authority is **not an authorization grant**. High authority never widens visibility, never
+bypasses classification, and never substitutes for a visibility policy.
+
+AU-5. Authority **may** affect deterministic conflict precedence, retrieval ranking, and the caveats
+attached to a generated answer. Those effects must be deterministic and explainable, never model
+judgement.
+
+AU-6. Authority catalogs and authority profiles are versioned artifacts. Changing a catalog is a
+versioned, audited control-plane change, not a free-text edit.
+
+AU-7. The exact typed fields, the catalog shape, and the ranking function remain CP-001 and CP-005
+work. This ADR fixes the semantics and the trust boundary only.
+
+## Source temporal metadata
+
+T-1. `effective_from` is the trusted **business** effective time of the revision: the time from
+which the content is considered to apply. When it is absent, the trusted default is the activation
+time.
+
+T-2. `valid_until` is **nullable and open-ended**. Null means the revision stays valid until an
+explicit lifecycle or security action ends it. Null is never interpreted as expired, and it is never
+silently replaced with a computed horizon.
+
+T-3. `published_at` is the optional **business publication** time. It may be unknown, and unknown is
+recorded as unknown rather than guessed.
+
+T-4. `observed_at` is the trusted **fetch or ingestion observation** time: when the platform saw
+this content.
+
+T-5. File upload time is **not** business publication time. Equating them is explicitly forbidden:
+an uploaded circular from 2019 does not become a 2026 publication because it was uploaded in 2026.
+
+T-6. Temporal metadata is trusted control-plane output. It is never parsed from document text by a
+model, never taken from a filename, and never supplied by a client as an authorization or
+eligibility input. Retrieval consumes it through the `valid_from` / `valid_until` rules in
+`docs/adr/ADR-CP-003-data-index-isolation-and-multi-node-retrieval.md` (L-9A to L-9C).
+
+T-7. Missing, malformed, or untrusted temporal metadata never broadens eligibility.
+
+## Source relationships
+
+```text
+SUPERSEDES     relation between revisions of the SAME KnowledgeSource
+SUPPLEMENTS    versioned relation between SEPARATE KnowledgeSources
+no relation    the sources are independent
+```
+
+SR-1. One `KnowledgeSource` still has **at most one active revision**. Supersession is the
+same-source mechanism, and it does not create two concurrently active revisions.
+
+SR-2. Activating a newer revision of the same source supersedes the previous revision atomically
+(see "Update and versioning rules").
+
+SR-3. Superseded content is retained for audit, for historical citation resolvability, and for
+explicit historical queries. Supersession changes retrieval eligibility, not resolvability (W-3).
+
+SR-4. `SUPPLEMENTS` is a versioned relation **between separate `KnowledgeSource` instances**. Two
+supplemental sources may both remain active and both remain retrievable at the same time. A
+supplement never silently deactivates the source it supplements. This is why a supplement cannot be
+modeled as a second active revision of one source.
+
+SR-5. Absence of a relationship means the sources are independent. Independence is the default.
+
+SR-6. An LLM must **not** infer, create, or modify these relationships. Relationships are trusted
+control-plane facts created by an authorized actor.
+
+SR-7. `AMENDS` and `PARTIALLY_SUPERSEDES` remain **explicitly deferred**. Partial amendment must not
+be guessed: until a typed relation exists, a document that partially changes another is registered
+as an independent or supplemental source, never as a partial override.
+
+## Source metadata classes
+
+Source metadata is not one resource. Reading "source metadata" is split into four distinct
+resources, because a citation footnote and an internal review queue are not the same data.
+
+| Metadata class | Contents | Who may read it |
+| --- | --- | --- |
+| `CitationSafePublishedSourceMetadata` | Only the minimum published facts needed for citation and explanation: title, source type, issuer or authority as published, publication or effective time, and the stable citation reference | Readable by any actor already entitled to read the content through ordinary policy, including End User and Guest |
+| `ManagementSourceMetadata` | Internal ownership, administrative owner node, review state, internal locator, legal hold, purge state, workflow detail, and internal status detail | Requires explicit management permission in scope. Never granted by a general "view metadata" permission |
+| `LifecycleAuditMetadata` | Lifecycle audit trail: who submitted, approved, rejected, activated, revoked, and why | Requires audit or lifecycle-audit permission in scope |
+| `RawSourceContent` | The raw stored payload or raw registered fetch payload | Requires the separate raw-content inspection permission, a recorded reason, and an audit obligation |
+
+M-1. Citation-safe metadata may include **only** the minimum published facts needed for citation and
+explanation. It is a data-minimization boundary, not a convenience subset.
+
+M-2. Guest and ordinary End User do **not** receive management metadata through a general "view
+metadata" permission. There is no permission in this baseline that grants both citation metadata and
+management metadata as one bundle.
+
+M-3. Administrative owner identity, review queue position, audit reason, raw locator, internal status
+detail, and purge or legal-hold metadata are management or audit metadata. They are never part of
+citation metadata.
+
+M-4. Per-actor semantics for each of these four read actions are in
+`docs/control-plane/CP-000B-source-lifecycle-matrix.md`, which is the canonical source-action matrix.
+
+## Workflow boundary
+
+These lifecycles are separate and must not be conflated. Each has its own failure modes and its own
+owner package.
+
+```text
+SourceRevision business lifecycle     (this ADR)
+ingestion validation                  (ingestion package)
+quarantine                            (ingestion/security package)
+parsing / OCR                         (CP-006)
+index-build lifecycle                 (CP-006)
+index activation                      (CP-006)
+physical cleanup                      (storage/compliance package)
+```
+
+WB-1. Business approval does **not** imply that any ingestion, parsing, OCR, or index-build step
+succeeded. `APPROVED` is a business decision about the content, not a technical success signal.
+
+WB-2. Source activation requires **all applicable gates** to pass: business approval, ingestion
+validation, and index availability where retrieval depends on it. A failure in any applicable gate
+blocks activation.
+
+WB-3. A revision that is business-approved but not technically ready is not eligible for retrieval.
+It fails closed rather than being served without an index.
+
+WB-4. Conversely, a successful index build never substitutes for business approval. Neither
+direction implies the other.
 
 ## Supported source types
 
@@ -247,6 +421,65 @@ acting principal's delegated authority. Widening beyond that authority is denied
 
 O-5. Exact approval requirements for these operations remain versioned deployment policy. This
 baseline mandates separability and auditability, not a specific workflow.
+
+## Source approval workflow (v1)
+
+The accepted v1 workflow is a **single centrally assigned Source Approver**, not one approver per
+faculty or department:
+
+```text
+Department Contributor
+    -> create / upload / edit own draft
+    -> submit
+        -> Central Source Approver
+            -> read the pending review surface
+            -> approve or reject the business decision
+
+Control Plane Application Service
+    -> after business approval
+    -> after every applicable validation, ingestion, and index gate
+    -> transition the revision to ACTIVE
+    -> automatically mark the previous active revision SUPERSEDED
+```
+
+AP-1. Department contributors may hold `source.create`, `source.upload`, `source.edit_own_draft`, and
+`source.submit` within their delegated scope.
+
+AP-2. The Central Source Approver holds `source.review`, `source.approve`, and `source.reject`.
+
+AP-3. `source.review` permits reading pending source submissions from **all departments**, because
+that is the required review surface for a single central approver. It does **not** independently
+grant access to unrelated active or restricted content, and it is not a general read permission.
+
+AP-4. The same principal must not approve a source submission that they created, authored, uploaded,
+or submitted. Holding `source.approve` does not override this v1 self-approval prohibition. Uploading or
+submitting is never approving.
+
+AP-5. v1 does **not** introduce one approver per faculty or department. That remains a possible
+future governance option, not a current requirement.
+
+AP-6. The Global or System Account Administrator **assigns** the approver capability. Assigning the
+capability does not make that administrator a source author: account and permission administration is
+separate from content authorship, and no administrative role acquires ordinary source-authoring
+permission implicitly.
+
+AP-7. `source.approve` records **business approval only**. It does not by itself make a revision
+`ACTIVE`. `ACTIVE` eligibility additionally requires all applicable validation, ingestion, and index
+gates to have passed. Approval alone never activates a source.
+
+AP-8. After business approval and all required technical gates, the Control Plane may perform the
+`ACTIVE` transition. Whether that happens in the same command or in a separate application-service
+step is owned by **CP-009 Control Plane Application Services**. v1 introduces no new human-facing
+`source.activate` permission.
+
+AP-9. A contributor or client **may propose** temporal metadata in a draft. The proposal is
+**untrusted**. Only validated, confirmed, and persisted Control Plane metadata is used by
+authorization, retrieval, or evidence eligibility. A client can never directly supply trusted
+temporal metadata.
+
+AP-10. The exact configurable separation-of-duties model beyond the mandatory AP-4 same-principal
+self-approval prohibition remains open, and the required
+review-surface contract for the approver is future work (CP-001, CP-009).
 
 ## Source lifecycle
 
@@ -317,9 +550,14 @@ existed.
 V-4. `SUPERSEDED` remains available for audit, existing citation resolution, and controlled
 rollback. It is never available to ordinary retrieval.
 
-V-5. Activation permission is distinct from approval permission, and approval never grants
-activation. The architecture supports separation of duties; the exact two-person rule is not
-mandated here.
+V-5. Business approval never activates a revision. `source.approve` records business approval only;
+after approval and all required validation, ingestion, and index gates pass, the Control Plane
+application service may transition the revision to `ACTIVE`, and activating a newer same-source
+revision automatically marks the previous active revision `SUPERSEDED`. The `ACTIVE` transition and the
+`SUPERSEDED` effect are lifecycle and application-service operations, not additional human-facing v1
+permissions, and whether they occur in one command or a separate application-service step is CP-009
+work (`AP-7`, `AP-8`). The architecture supports separation of duties; no two-person rule is mandated
+here.
 
 V-6. A rejected revision is terminal for that revision. Continuing means a new draft.
 
@@ -375,6 +613,8 @@ A source revision is eligible for retrieval only when **all** of the following h
 6. The source is not revoked.
 7. The content/revision digest matches trusted metadata.
 8. The authorization decision grants the required security scope.
+9. Current trusted time is greater than or equal to `effective_from`.
+10. `valid_until` is null, **or** current trusted time is less than or equal to `valid_until`.
 
 E-1. The conjunction is evaluated from trusted state and versioned artifacts only. No condition
 may be satisfied by uploader metadata, client input, document content, or LLM output.
@@ -391,6 +631,18 @@ that the retrieval path must enforce.
 
 E-6. Guest reads follow the same conjunction, with the additional CP-000A constraints:
 `anonymous-public` policy plus the platform-approved public classification.
+
+E-7. Temporal validity is part of the conjunction, not a post-filter. Missing, malformed, or untrusted
+temporal metadata fails closed: the revision is excluded, never included. A null `valid_until` means
+open-ended eligibility until an explicit lifecycle or security action ends it, and is never treated as
+expired.
+
+E-8. Draft or client-proposed temporal values remain untrusted until validated, confirmed, and
+persisted by the Control Plane (`AP-9`). Only trusted persisted values may satisfy conditions 9 and 10.
+This aligns with the trusted `valid_from` / `valid_until` index metadata in
+`docs/control-plane/CP-000C-index-isolation-blueprint.md` and with the temporal-derivation limitation
+recorded in `docs/contracts/evidence-1.0.0.md`, where the derivation and revalidation of those values is
+still future work.
 
 ## Authorization boundaries
 
@@ -422,7 +674,9 @@ this registry and must not be modeled as knowledge sources (ADR-CP-002 B-1).
 | Digest mismatch | Revision ineligible; no repair at read time; incident-worthy |
 | Source revoked, disabled, or archived | Immediate exclusion from new retrieval |
 | No activated revision | Not retrievable regardless of source status |
-| Activation attempted without activation permission | Deny; approval does not substitute |
+| Activation requested with missing business approval | Refuse the transition; no revision becomes `ACTIVE` without a recorded `source.approve` decision |
+| Activation requested with missing or failed technical gates | Refuse the transition; business approval never substitutes for validation, ingestion, or index gates |
+| Unauthorized Control Plane lifecycle transition | Refuse and audit; the `ACTIVE` transition is a Control Plane application-service operation, and v1 exposes no human-facing `source.activate` permission |
 | Eligibility state unreadable or inconsistent | Fail closed: exclude, never include |
 | Authorization decision missing or expired | No retrieval, never unfiltered retrieval |
 
@@ -483,4 +737,8 @@ this registry and must not be modeled as knowledge sources (ADR-CP-002 B-1).
 | Rollback implementation details | The semantic (audited re-activation, no history mutation) is decided; the mechanism and eligibility window are not | Source-registry implementation package | Operational rollback scenarios and audit requirements |
 | Whether selected metadata-only changes require full content re-indexing | Depends on the unselected index backend and on how policy bindings are represented physically | Retrieval/index package | Index backend behavior and measured re-index cost |
 | Whether a chat attachment may be promoted to `uploaded_document` | Attachment trust and lifetime differ; promotion would need its own validation path | Future attachment package | Product requirement and trust analysis |
+| Typed `AMENDS` / `PARTIALLY_SUPERSEDES` relation | Explicitly deferred by SR-7; partial amendment must not be guessed | CP-005 with CP-006 | A real partial-amendment use case and its conflict-resolution requirement |
+| Exact `AuthorityProfile` and authority-catalog shape | AU-1 to AU-6 fix the semantics and trust boundary; the typed shape and ranking function are undecided | CP-001 with CP-005 | Approved authority taxonomy per deployment type and conflict-precedence requirements |
+| Source Approver review-surface contract | AP-3 fixes what `source.review` means; the read-model and surface contract do not exist | CP-001 with CP-009 | Approved review-queue requirements |
+| Versioned audited bulk policy-rebinding migration | R-5A forbids in-place rebinding of an active revision; the migration mechanism is undecided | CP-005 | Real migration scenarios and audit obligations |
 | Quarantine or validation-failed revision states | Adding states to the revision machine requires the ingestion decision first | Ingestion package | Scanning and validation workflow decisions |

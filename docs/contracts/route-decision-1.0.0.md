@@ -1,11 +1,28 @@
 # RouteDecision 1.0.0
 
-- Status: proposed for local verification
+- Status: Accepted and implemented as a bounded baseline
 - Owner: Deterministic Routing Policy Boundary
 - Schema identifier: `urn:ai-assistant:contracts:route-decision:1.0.0`
 - JSON Schema dialect: `https://json-schema.org/draft/2020-12/schema`
 - Artifact: `schemas/route-decision/1.0.0.schema.json`
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| `RouteLane` in 1.0.0 already contains `deny`, and `deny` is already a **terminal lane** together with `clarify` and `abstain`: it allows no capability, requires no fact, carries no filter and no approved flow reference, and requires an all-zero execution budget. CP-000R re-scoped audit finding C-004 against the committed contract: the gap is runtime, not contractual | AI-002 |
+| Canonical deny semantics. An **authorization** deny occurs *before* routing, yields `UNAUTHORIZED`, and requires no `RouteDecision`. A **route or policy** deny is expressed as `RouteDecision(lane="deny")`, yields `POLICY_REJECTED`, carries a zero execution budget, and executes no capability | AI-002 |
+| The bounded Runtime and the Walking Skeleton do not yet provide complete terminal handling for `RouteDecision(lane="deny")` (`DEF-118`) | AI-002 |
+| `UNAUTHORIZED` and `POLICY_REJECTED` are distinct outcomes and must remain distinguishable in routing and in audit, not collapsed into one generic failure | AI-002 |
+| Clarification and abstention routing is a deliberate transitional state (audit finding C-005) and is not yet the final routing taxonomy | AI-002 |
 ## Purpose
 
 RouteDecision is the immutable output of trusted deterministic routing policy. It freezes the

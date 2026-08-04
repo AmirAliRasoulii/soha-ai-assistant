@@ -1,6 +1,7 @@
 # CP-000C Index Isolation Blueprint
 
-Status: proposed for CP-000C architect review (not accepted, no implementation authorized)
+Status: Accepted architecture baseline (originated as CP-000C; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Scope: operational companion to ADR-CP-003 (data/index isolation and multi-node retrieval). Tables
 only; no provider is selected, no threshold is fixed, no benchmark result is asserted.
 
@@ -11,6 +12,9 @@ Companions:
 - `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`
 - `docs/control-plane/CP-000A-authorization-matrix.md`
 - `docs/control-plane/CP-000B-source-lifecycle-matrix.md`
+- `docs/adr/ADR-CP-003-data-index-isolation-and-multi-node-retrieval.md`
+- `docs/adr/ADR-CP-006-runtime-snapshot-factory-cache-and-lkg.md`
+- `docs/control-plane/CP-000R-architecture-consistency-repair.md`
 
 ## Legend
 
@@ -25,7 +29,14 @@ Companions:
 | `AUDIT` | Requires a recorded reason and actor |
 | `OPEN` | Deliberately undecided in this package |
 
-## 18.1 Metadata matrix
+## 18.1 Mandatory Isolation Metadata Subset matrix
+
+The fourteen fields below are the **Mandatory Isolation Metadata Subset**, mirroring ADR-CP-003. They
+are the minimum trusted metadata required to construct and enforce the mandatory pre-filter. They are
+**not** the complete chunk or index metadata contract: retrieval-quality metadata, parser and chunker
+provenance, positional data, language metadata, and ranking features are outside this subset and are
+owned by CP-006. CP-006 may add fields; it may never remove a field of this subset or make one
+optional. A unit missing any member of this subset is ineligible, never partially filtered.
 
 | Field | Trusted producer | Purpose | Authorization-relevant | Mutable | Failure behavior |
 | --- | --- | --- | --- | --- | --- |
@@ -40,8 +51,8 @@ Companions:
 | `index_snapshot_ref` | Ingestion/index build | Binds the unit to an immutable build | Yes, `GATE` on active snapshot | No, immutable | Not active or unavailable: `ABSTAIN` per runtime policy |
 | `embedding_artifact_ref` | Ingestion/index build | Ensures query and unit vectors are comparable | No, but correctness `GATE` | No, immutable | Mismatch with the query artifact: unit not comparable, excluded |
 | `content_digest` | Ingestion, over trusted content | Integrity binding to approved content | Yes, `GATE` | No, immutable | Mismatch: ineligible, produces no evidence, integrity incident recorded |
-| `valid_from` | Control plane | Start of eligibility | Yes, `FILTER` | Only by an audited revision change | Missing: treated as not yet valid, excluded |
-| `valid_until` | Control plane | End of eligibility | Yes, `FILTER` | Only by an audited revision change | Passed or unparseable: excluded |
+| `valid_from` | Control plane, derived from trusted `SourceRevision.effective_from`; trusted activation time when `effective_from` is absent | Start of eligibility | Yes, `FILTER` | Only by an audited revision change | Missing, malformed, or untrusted: treated as not yet valid, excluded. Never parsed from document text, a filename, a client value, or model output |
+| `valid_until` | Control plane, from trusted `SourceRevision` temporal metadata | End of eligibility; **nullable** | Yes, `FILTER` | Only by an audited revision change | Null means open-ended and stays eligible until an explicit lifecycle or security action; passed or unparseable: excluded. Missing temporal metadata never broadens access |
 | `status` | Control plane, derived from source and revision state | Trusted eligibility state | Yes, `FILTER` `GATE` | Yes, on lifecycle actions | Not active, unknown, or unresolvable: excluded `FAIL-CLOSED` |
 
 All uploader-supplied equivalents of these fields are `UNTRUSTED` until validated and persisted as
@@ -68,7 +79,7 @@ demotion and migration require `AUDIT`; deployment policy may prohibit lower tie
 | Case | Scope resolution | Filter requirement | Expected outcome |
 | --- | --- | --- | --- |
 | Authenticated single-node | One authorized `security_scope_ref` from the decision | `FILTER` on organization, scope, classification, status, effective time, snapshot | Only that node's authorized units; no parent, child, or sibling content |
-| Authenticated multi-node | Bounded logical allow-set of authorized scopes | One authorization envelope; one or a bounded set of physically routed queries, each with equivalent mandatory constraints | Union of authorized scopes only; per-result lineage preserved; no per-membership or unbounded fan-out |
+| Authenticated multi-node | Bounded logical allow-set of authorized scopes | **One logical authorization/retrieval envelope plus one or a bounded number of physical backend queries**, each carrying the equivalent mandatory constraints derived from that single envelope. This blueprint does not claim that every multi-node request performs exactly one physical query | Union of authorized scopes only; per-result lineage preserved; no per-membership or unbounded fan-out |
 | Explicit subtree | Versioned subtree scope artifact grants breadth | `FILTER` includes the granted subtree scope, not a parsed path | Subtree units within the grant; unrelated branches denied |
 | Anonymous Guest | No membership; active `anonymous-public` scopes only | Mandatory public `FILTER` plus classification allowance | Only explicitly published units; never a global scan; no management or raw access |
 | Authenticated access to `anonymous-public` | Public scopes plus the principal's own scopes | Single combined `FILTER`; public hits remain separately identifiable | Both sets returned; public origin visible in lineage; no membership implied |
@@ -121,7 +132,49 @@ on documentation claims. No result is asserted in this document.
 | Licensing and lock-in | Review licences and portability of the adapter boundary | Adapter prototype per candidate | Adapter complexity, exit cost | Comparative | CP-012 |
 | Residency fit | Check deployment options against residency requirements | Residency requirement list | Requirements satisfied | Hard gate where residency is committed | CP-012 |
 
-## 18.5 Failure-behavior table
+## 18.5 Source Registry dependency matrix
+
+Index eligibility is not self-contained. It consumes trusted Source Registry state defined in
+`docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`.
+
+| Dependency | Consumed as | Trust rule | Effect on retrieval |
+| --- | --- | --- | --- |
+| Source authority (`authority_class_ref`, `issuer_ref`, `authority_assignment_policy_ref`) | Deterministic conflict precedence, ranking input, answer caveats | `TRUSTED` only after the Central Source Approver confirms or assigns it from an approved versioned catalog; LLM, client, filename, and document-text labels are `UNTRUSTED` | Authority is **not** an authorization grant. It never widens visibility and never bypasses classification |
+| Source temporal metadata (`effective_from`, `valid_until`, `published_at`, `observed_at`) | Produces `valid_from` / `valid_until` in 18.1 | `TRUSTED` control-plane output only; upload time is never business publication time | `FILTER` on effective time; missing or untrusted values never broaden access |
+| Source lifecycle (`ACTIVE`, `DISABLED`, `REVOKED`, `ARCHIVED`, revision states) | Produces `status` in 18.1 | `TRUSTED` control-plane state; authoritative over index presence | `GATE` `FAIL-CLOSED`; revocation is immediate and independent of physical index contents |
+| Source relationships (`SUPERSEDES`, `SUPPLEMENTS`) | Current-versus-historical revision selection and supplemental coexistence | `TRUSTED` control-plane facts created by an authorized actor; an LLM must never infer them | A superseded revision is excluded from current retrieval but stays resolvable for historical citation; two supplemental sources may both remain active and both eligible |
+
+## 18.6 Aggregate IndexSnapshot manifest
+
+| Aspect | Rule |
+| --- | --- |
+| Meaning of `RuntimeSnapshotContent.index_snapshot` | A **logical aggregate `IndexSnapshot` manifest**, not a pointer to a single physical build |
+| Contents | References one or more eligible physical snapshots plus the routing metadata needed to select among them |
+| Why | Retrieval may legitimately consult several eligible physical snapshots, especially once scopes are promoted to Tier 2 to Tier 4, while the contract carries one named reference |
+| Selection authority | Trusted runtime routing only. No client and no model may select an arbitrary physical snapshot from inside the manifest |
+| Resolution path | The manifest is resolved through the configuration path in `docs/adr/ADR-CP-006-runtime-snapshot-factory-cache-and-lkg.md`; named refs must match the active `ConfigurationRelease` manifest |
+| Failure behavior | An unverifiable or stale manifest is `FAIL-CLOSED` or `ABSTAIN` per approved runtime policy; never a fallback to an unverified snapshot |
+
+## 18.7 Source-version benchmark fixture
+
+The benchmark that gates backend selection must include a fixture exercising source-version and
+relationship semantics together. This is a **correctness gate**, not a quality metric: a backend that
+cannot express the required filters over this fixture is disqualified regardless of its recall or
+latency results.
+
+| Fixture element | Required behavior | Gate |
+| --- | --- | --- |
+| Current source revision | Active revision is retrievable for authorized principals | Hard gate |
+| Historical superseded revision | Excluded from current retrieval; resolvable only through an explicit historical query; citations to it remain resolvable | Hard gate |
+| Two active supplemental sources | Both coexist and both remain retrievable; neither supersedes the other | Hard gate |
+| Null `valid_until` | Remains eligible as open-ended | Hard gate |
+| Expired `valid_until` | Excluded | Hard gate |
+| Revoked source | Excluded immediately, independent of physical presence | Hard gate |
+
+No provider is selected by this fixture or anywhere in this document. PostgreSQL with pgvector,
+Qdrant, and OpenSearch remain open candidates.
+
+## 18.8 Failure-behavior table
 
 | Failure | Architectural behavior | Retry | Result to caller |
 | --- | --- | --- | --- |
@@ -158,6 +211,19 @@ on documentation claims. No result is asserted in this document.
   query-policy concern.
 - No provider is selected here, and no benchmark number in this repository may be cited until it has
   actually been produced by the plan above.
+- The fourteen isolation fields are the Mandatory Isolation Metadata Subset, not the complete indexed
+  unit metadata contract; the complete contract is owned by CP-006.
+- Multi-node retrieval is one logical authorization/retrieval envelope plus one or a bounded number of
+  physical backend queries. Physical query count is an operational property, never an authorization
+  property.
+- `valid_until` is nullable, and null means open-ended eligibility until an explicit lifecycle or
+  security action. Null is never treated as expired.
+- `valid_from` has exactly one trusted producer: the control plane, from trusted
+  `SourceRevision.effective_from`, defaulting to trusted activation time.
+- `RuntimeSnapshotContent.index_snapshot` is a logical aggregate manifest referencing one or more
+  eligible physical snapshots and their routing metadata.
+- Source authority may affect ranking, conflict precedence, and caveats. It never affects
+  authorization.
 
 ## Open decisions
 

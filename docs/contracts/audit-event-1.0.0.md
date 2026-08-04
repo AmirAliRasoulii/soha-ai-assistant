@@ -1,8 +1,24 @@
 # AuditEvent 1.0.0
 
-Status: proposed for local verification
+Status: Accepted and implemented as a bounded baseline
 Owner: Chat Runtime Audit Boundary
 
+
+## Bounded baseline status and known limitations (CP-000R)
+
+This contract is **accepted and implemented as a bounded baseline**. Base repository evidence:
+`6477c1c`. Bounded implementation existed at base commit `6477c1c`. CP-000R documentation acceptance
+becomes effective when the CP-000R commit is reviewed and merged.
+CP-000R changed no field, no type, no validation rule, no schema, and no version of this contract. It
+records truthfully what this 1.0.0 contract does and does not yet cover, and who owns the remaining
+work.
+
+| Known limitation | Owner |
+| --- | --- |
+| A `runtime.turn.completed` audit event emitted before durable idempotency completion is a **pre-completion** signal. It is not proof of durable turn completion, and durable completion is **not** implemented today (audit finding C-006, HIGH audit semantics) | CP-001 for typed audit contracts and versioning, CP-009 for application-service audit semantics and emission, CP-012 for durable persistence and delivery adapters, AI-002 for request and run lifecycle and terminal transitions, AI-007 for answer-finalization and publication hooks |
+| The full outcome taxonomy required by the architecture is not yet typed here (audit finding G-012). The required outcomes are `answered`, `partial`, `clarification_required`, `abstained`, `policy_rejected`, `authorization_denied`, `failed`, and `authorization_denied` must remain distinct from `policy_rejected` | CP-001 for the typed contract, CP-009 for emission semantics, AI-002 for terminal lifecycle transitions, AI-007 for finalization hooks |
+| Runtime lineage is not fully carried. The complete future lineage requirement is organization, actor scope, subject, time scope, source version, policy version, `ConfigurationRelease`, `RuntimeSnapshot`, and run or request identifier. `AuditEvent 1.0.0` does not contain that complete lineage, and this document does not claim that it does (audit finding G-013) | CP-001 for the typed lineage contract, CP-009 for emission, CP-012 for durable persistence and delivery, AI-002 for run lifecycle, AI-007 for publication hooks |
+| Audit remains fail-closed; telemetry and evaluation export remain fail-open. The two must not be conflated | Unchanged rule |
 ## Purpose
 
 `AuditEvent` is the canonical AI Core contract for a safe, minimal, replayable

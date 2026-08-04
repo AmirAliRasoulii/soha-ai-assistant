@@ -1,6 +1,7 @@
 # ADR-CP-003: Data/Index Isolation and Multi-Node Retrieval
 
-Status: proposed for CP-000C architect review (not accepted, no implementation authorized)
+Status: Accepted architecture baseline (originated as CP-000C; CP-000R consistency repair applied, and CP-000R acceptance becomes effective when the CP-000R commit is reviewed and merged)
+Implementation remains owned by the packages identified in this document.
 Date: recorded with the CP-000C architecture package
 Owner: Control Plane / Data and Index Isolation Baseline
 Scope: logical isolation, trusted query-time filter boundary, multi-node retrieval semantics,
@@ -102,6 +103,21 @@ physical-isolation promotion.**
 This package uses conceptual references only. None of these is a display label, and none may be
 supplied by a client or produced by a model.
 
+### Mandatory Isolation Metadata Subset
+
+The fourteen references in the table below are the **Mandatory Isolation Metadata Subset**. That
+name is deliberate and normative:
+
+- it is the minimum trusted metadata that every retrievable indexed unit must carry so that the
+  mandatory pre-filter can be constructed and enforced;
+- it is **not** the complete chunk or index metadata contract. Retrieval quality metadata, parser
+  and chunker provenance, positional data, language metadata, ranking features, and display
+  metadata are all outside this subset;
+- the complete indexed-unit metadata contract is owned by CP-006, and CP-006 may add fields. It may
+  never remove a field of this subset or make one of them optional;
+- a unit missing any member of this subset is ineligible. It is never treated as "partially
+  filtered" and never admitted with a default value.
+
 | Reference | Meaning in this package |
 | --- | --- |
 | `organization_ref` | Stable identity of the owning organization; the outermost private boundary. |
@@ -115,7 +131,7 @@ supplied by a client or produced by a model.
 | `index_snapshot_ref` | The immutable index build the unit belongs to. |
 | `embedding_artifact_ref` | The immutable embedding configuration/model artifact used to produce vectors. |
 | `content_digest` | Digest of the trusted content the unit was derived from, used for integrity binding. |
-| `valid_from` / `valid_until` | Effective-time bounds for eligibility. |
+| `valid_from` / `valid_until` | Effective-time bounds for eligibility, produced by a trusted control-plane path only. See "Temporal metadata semantics". |
 | `status` | Trusted eligibility state of the unit, derived from source and revision state. |
 
 Explicitly **not** authorization identifiers: `department_name`, `role_name`, a `visibility = public`
@@ -157,6 +173,17 @@ set an isolation mechanism are:
   ineligible unit produces no evidence, not degraded evidence.
 - **L-9.** `status`, `valid_from`, and `valid_until` are part of the eligibility conjunction, not
   advisory hints.
+- **L-9A (temporal metadata semantics).** `valid_from` is derived from the trusted
+  `SourceRevision.effective_from` recorded by the Source Registry
+  (`docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`). When `effective_from` is absent,
+  the trusted default is the trusted activation time. `valid_from` is never parsed from document
+  text, never taken from a filename, never supplied by a client, and never inferred by a model.
+- **L-9B.** `valid_until` is **nullable**. A null `valid_until` means open-ended: the unit stays
+  eligible until an explicit lifecycle or security action ends its eligibility. Null is not treated
+  as expired, and it is not silently replaced with a computed horizon.
+- **L-9C.** Missing, malformed, or untrusted temporal metadata **never broadens access**. If
+  `valid_from` cannot be trusted, the unit is ineligible; an unparseable `valid_until` is treated as
+  expired rather than as open-ended.
 - **L-10.** Revoked or disabled content is excluded fail-closed, immediately, regardless of physical
   presence.
 - **L-11.** The unit's authorization metadata is redundant with control-plane state by design. On
@@ -226,11 +253,23 @@ Rules:
 
 ## Multi-node retrieval semantics
 
-Multi-node retrieval is defined as: one trusted `AuthorizationDecision` -> one bounded set of
-authorized `security_scope_ref` values -> one or more eligible index snapshot selections -> one
-logical authorization envelope. A trusted physical router may execute one backend query or a
-bounded set of backend queries when authorized scopes span promoted tiers or deployments; every
-physical query must carry the equivalent mandatory trusted constraints.
+Multi-node retrieval is defined as **one logical authorization/retrieval envelope plus one or a
+bounded number of physical backend queries**:
+
+```text
+one trusted AuthorizationDecision
+    -> one bounded set of authorized security_scope_ref values
+    -> one or more eligible index snapshot selections
+    -> ONE logical authorization/retrieval envelope
+         -> one OR a bounded number of physical backend queries
+```
+
+This document does **not** claim that every multi-node request performs exactly one physical query.
+The invariant is that there is exactly one logical envelope, and that every physical query executed
+under it carries the equivalent mandatory trusted constraints derived from that single envelope. A
+trusted physical router may execute one backend query, or a bounded set of backend queries when
+authorized scopes span promoted tiers or deployments. Physical query count is an operational and
+routing property; it is never an authorization property.
 
 - **N-1.** Scope membership is explicit. Holding a membership in one node grants nothing in any
   other node.
@@ -302,12 +341,51 @@ activation status, and a superseded-snapshot reference.
 - **S-6.** Prior snapshots remain available for rollback according to retention policy.
 - **S-7.** Snapshot selection is trusted runtime state, consistent with the verified
   `RuntimeSnapshotContent.index_snapshot` artifact reference.
+- **S-7A (aggregate manifest semantics).** `RuntimeSnapshotContent.index_snapshot` is a **logical
+  aggregate `IndexSnapshot` manifest**, not a pointer to a single physical build. It references one
+  or more eligible physical snapshots together with the routing metadata needed to select among
+  them. This resolves the apparent conflict between a single `index_snapshot` reference in the
+  contract and retrieval that may legitimately consult several eligible physical snapshots.
+- **S-7B.** No client and no model may select an arbitrary physical snapshot from inside the
+  aggregate manifest. Selection is trusted runtime routing only, and the aggregate manifest itself
+  is resolved by the configuration path described in
+  `docs/adr/ADR-CP-006-runtime-snapshot-factory-cache-and-lkg.md`.
 - **S-8.** Neither the client nor the model may select an arbitrary snapshot.
 - **S-9.** Stale or unverifiable snapshot state fails closed or abstains according to approved
   runtime policy. It never falls back to an unverified snapshot.
 - **S-10.** Source revocation must not wait for a new snapshot build.
 
 Alias switching, transaction semantics, and build orchestration are explicitly not prescribed.
+
+## Source Registry dependencies
+
+Index isolation is not self-contained. The eligibility conjunction depends on trusted Source
+Registry state defined in `docs/adr/ADR-CP-007-source-registry-and-content-lifecycle.md`:
+
+| Dependency | What retrieval consumes | Why it matters here |
+| --- | --- | --- |
+| Source authority | `authority_class_ref`, issuer reference, and the versioned authority profile | Authority is **not** an authorization grant. It may affect deterministic conflict precedence, ranking, and answer caveats. A model-supplied or client-supplied authority label is untrusted and must not reach ranking. |
+| Source temporal metadata | `effective_from`, `valid_until`, `published_at`, `observed_at` | Produces `valid_from` / `valid_until` in the isolation subset (L-9A, L-9B). Upload time is never treated as business publication time. |
+| Source lifecycle | `KnowledgeSource` and `SourceRevision` states, revocation, supersession | Drives `status` in the isolation subset and the fail-closed exclusion in L-10 and D-6. |
+| Source relationships | `SUPERSEDES` within one `KnowledgeSource`, `SUPPLEMENTS` across separate sources | A superseded revision must not appear in current retrieval, while two supplemental sources may both be active and both eligible. The model never infers these relationships. |
+
+## Benchmark fixture requirement
+
+The benchmark that gates backend selection must include a fixture that exercises source-version and
+relationship semantics together, covering at minimum:
+
+```text
+current source revision                  (active, must be retrievable)
+historical superseded revision           (must be excluded from current retrieval,
+                                          resolvable only through explicit historical query)
+two active supplemental sources          (must coexist; neither supersedes the other)
+```
+
+This fixture is a correctness gate, not a quality metric. A backend that cannot express the
+required filters over this fixture is disqualified regardless of its recall or latency results. No
+vector or search backend is selected in this package: pgvector, Qdrant, OpenSearch, and any other
+candidate remain open, and the comparison stays open until the benchmark in
+`docs/control-plane/CP-000C-index-isolation-blueprint.md` passes its hard security gates.
 
 ## Revocation and stale-index behavior
 
@@ -545,7 +623,8 @@ integrations. Ranking fairness across nodes is deferred to CP-007.
 | Exact physical topology | Depends on backend primitives and measured tenant distribution | CP-012 | Production corpus and QPS distribution per organization |
 | Exact promotion/demotion thresholds | No production measurements exist | PERF-001 with CP-012 | Latency, selectivity, and noisy-neighbour curves per tier |
 | Exact index-routing implementation | Requires the chosen backend's partitioning model | CP-012 | Backend routing primitives and failover behaviour |
-| Exact `IndexSnapshot` typed contract | Depends on the ingestion pipeline's real build steps | CP-001 with CP-006 | Parser, chunker, and embedding versioning shapes from CP-006 |
+| Exact `IndexSnapshot` typed contract, including the aggregate-manifest representation | Depends on the ingestion pipeline's real build steps; S-7A fixes the semantics, not the shape | CP-001 with CP-006 | Parser, chunker, and embedding versioning shapes from CP-006 |
+| Complete indexed-unit metadata contract beyond the Mandatory Isolation Metadata Subset | The subset is fixed here; retrieval-quality and provenance metadata are not designed | CP-006 | Chunking, parsing, and ranking feature requirements |
 | Exact `VectorStorePort` shape | The minimal contract must precede production adapters but remain versionable | AI-003 with CP-012 | Provider PoCs/conformance fakes followed by production-adapter validation |
 | Whether lexical and vector share one backend | Depends on hybrid quality versus operational cost | CP-012 with CP-013 | Comparative hybrid quality and operational burden |
 | Filter-aware ANN tuning | Backend-specific and quality-sensitive | AI-003 with PERF-001 | Recall-versus-latency curves under realistic filters |

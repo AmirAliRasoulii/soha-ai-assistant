@@ -2,11 +2,22 @@
 
 ## Status
 
+Status: Accepted and implemented bounded in-process baseline.
+
+Base repository evidence: `6477c1c`. Bounded implementation existed at base commit `6477c1c`.
+CP-000R documentation acceptance becomes effective when the CP-000R commit is reviewed and merged.
+
 This document describes the WS-004B terminal closure of the bounded fast
-document Walking Skeleton. It closes DEF-002, DEF-083, DEF-087, and DEF-091
-for the bounded flow described below. **This is not a production-ready
+document Walking Skeleton. It provides accepted bounded-scope evidence for
+`DEF-002`, `DEF-083`, and `DEF-087`; their production obligations remain open
+in the Deferred Register. `DEF-091` is `DONE` for the bounded Walking Skeleton
+scope. **This is not a production-ready
 system.** It is a bounded, in-process proof of the full turn lifecycle using
 test-fake adapters only.
+
+CP-000R changed no code and no flow in this package. It corrected overbroad
+claims in this document and recorded which limitations are transitional and
+who owns the remaining work.
 
 ## Scope
 
@@ -138,12 +149,54 @@ and never fabricates an `ExecutionPlan`, `EvidenceBundle`, `AnswerPlan`, or
 - `RouteDecision.lane == "clarify"` -> `ErrorEnvelope(code="AMBIGUOUS_REQUEST")`
 - `RouteDecision.lane == "abstain"` -> `ErrorEnvelope(code="NO_EVIDENCE")`
 
-using `completion_artifacts.stopped_error_id` and
+This mapping is **transitional**, not the final answer taxonomy (audit finding
+C-005). Clarification and abstention are legitimate answer outcomes rather
+than errors; expressing them through `ErrorEnvelope` is a bounded-baseline
+arrangement owned by AI-002 and AI-006.
+
+The mapped `ErrorEnvelope` is constructed using `completion_artifacts.stopped_error_id` and
 `completion_artifacts.stopped_internal_detail_ref`, and canonical
 `safe_message_key`/`retryable`/`correlation_id` semantics from the existing
 `ErrorEnvelope` contract. Any other stopped route lane is rejected with
 `ValueError`; this is a pre-plan outcome and always remains on the
 `ErrorEnvelope` path, never a fabricated `FinalAnswer`.
+
+`RouteDecision 1.0.0` **already contains** the `deny` lane, and `deny` is
+already a terminal lane alongside `clarify` and `abstain`. Nothing must be
+added to the contract. The canonical semantics are:
+
+- an **authorization** deny occurs *before* routing, yields `UNAUTHORIZED`,
+  and requires no `RouteDecision`;
+- a **route or policy** deny is `RouteDecision(lane="deny")`, yields
+  `POLICY_REJECTED`, carries a zero execution budget, and executes no
+  capability.
+
+The actual gap is that this bounded Runtime and Walking Skeleton do not yet
+provide complete terminal handling for `RouteDecision(lane="deny")`
+(`DEF-118`, owned by AI-002). `UNAUTHORIZED` must remain distinguishable from
+`POLICY_REJECTED`.
+
+## Bounded routing and planning primitives, not the production Orchestrator
+
+This Walking Skeleton contains **bounded deterministic routing, planning, and
+execution primitives**. It is **not** the complete production Orchestrator and
+Planner, and this document does not claim that they are implemented.
+
+The production Orchestrator (lane selection, capability limiting, bounded
+execution budget assignment, conditional Planner invocation, and control of
+request execution and state transitions) and the production Planner
+(decomposition, evidence-requirement identification, selection of
+pre-authorized capabilities only, dependency and bounded-parallelism
+definition, and result composition, under a maximum of five steps, bounded
+parallelism, and at most one bounded replan) are owned by **AI-002 Adaptive
+Routing and Bounded Planning**, with **AI-009 Latency, Budget, Cache and
+Failure Control** as supporting owner, and tracked as the repaired `DEF-092`.
+Fast questions use a deterministic one-step plan and require no LLM Planner.
+
+Runtime lineage in this baseline is also incomplete. The complete future
+lineage requirement is organization, actor scope, subject, time scope, source
+version, policy version, `ConfigurationRelease`, `RuntimeSnapshot`, and run or
+request identifier (`DEF-115`). This baseline does not carry it.
 
 ## Audit-before-complete ordering
 
@@ -232,18 +285,63 @@ audit, or completion.
 - Coverage, lint, and type-checking claims in this delivery are limited to
   what was actually executed in the authoring environment; see the patch's
   closing block for exactly which tools were run.
+- The `runtime.turn.completed` audit event is emitted **before** durable
+  idempotency completion. It is therefore a **pre-completion** signal and is
+  **not** proof of durable turn completion (audit finding C-006). Interpreting
+  it as durable completion would be an audit-semantics error. Resolving the
+  ordering or renaming the event is owned by CP-001 for the typed contract,
+  CP-009 for application-service audit semantics and emission, CP-012 for
+  durable persistence and delivery adapters, AI-002 for the run lifecycle and
+  terminal transitions, and AI-007 for answer-finalization and publication
+  hooks. Durable completion is **not** implemented today.
+- The audit outcome vocabulary here is narrower than the architecture requires
+  (audit finding G-012). The required outcomes are `answered`, `partial`,
+  `clarification_required`, `abstained`, `policy_rejected`,
+  `authorization_denied`, and `failed`. Owners: CP-001 for the typed contract,
+  CP-009 for emission semantics, AI-002 for terminal lifecycle transitions,
+  and AI-007 for finalization hooks.
+- Runtime lineage in the emitted audit event is incomplete. The complete
+  future lineage requirement is organization, actor scope, subject, time
+  scope, source version, policy version, `ConfigurationRelease`,
+  `RuntimeSnapshot`, and run or request identifier (audit finding G-013). It
+  is not reduced to only the policy revision, the authorized scope reference,
+  and the aggregate index snapshot manifest. Owners: CP-001 for the typed
+  lineage contract, CP-009 for emission semantics, CP-012 for durable
+  persistence and delivery, AI-002 for run lifecycle, AI-007 for publication
+  hooks.
+- **No production adapter of any kind exists**: no HTTP, database, cache,
+  distributed lock, audit store, telemetry backend, model provider, or vector
+  store adapter has been built or validated.
 
-## Department-isolation compatibility
+## Scope-lineage integrity (not production department isolation)
 
-This package adds no department domain model, no department configuration
-surface, and no department-name parsing. It preserves every existing
-department-isolation invariant of the reused stages: no global source
-fallback, no cross-department evidence merging, no source-label
-authorization, no scope broadening after finalization, no resolver calls
-during terminal closure, and no evidence inspection in the audit event or
-telemetry record it constructs. WS-004B consumes the already-trusted
-`FinalAnswer` exactly as produced by `finalize_pending_answer`, without
-reconstructing or altering its citations.
+**Department isolation is not fully enforced by this package.** What this
+baseline demonstrates is **scope-lineage integrity in the bounded in-process
+flow**: the reused stages do not broaden or lose the authorization scope that
+was already decided upstream.
+
+Production policy authorization is a different and larger thing. It requires
+the organization hierarchy, membership and scoped roles, pinned
+`VisibilityPolicyDefinition` revisions, trusted isolation metadata, and the
+mandatory retrieval pre-filter defined in `ADR-CP-001`, `ADR-CP-002`,
+`ADR-CP-003`, and `ADR-CP-007`. None of that exists in this package.
+
+What this package does provide, and all it provides:
+
+- no department domain model, no department configuration surface, and no
+  department-name parsing;
+- no global source fallback;
+- no cross-department evidence merging;
+- no source-label authorization;
+- no scope broadening after finalization;
+- no resolver calls during terminal closure;
+- no evidence inspection in the audit event or telemetry record it
+  constructs.
+
+WS-004B consumes the already-trusted `FinalAnswer` exactly as produced by
+`finalize_pending_answer`, without reconstructing or altering its citations.
+Authorization correctness itself is owned by CP-002 and AI-003, not
+demonstrated here.
 
 ## Control Plane boundary
 
