@@ -1,0 +1,211 @@
+{
+  "$defs": {
+    "HierarchyPathRef": {
+      "additionalProperties": false,
+      "description": "Materialized ancestor path of one node, root first.\n\nThis is a read reference to a derived structure. Computing it, caching it,\nand invalidating it after a move are CP-002 and CP-009 obligations\n(DEF-105); this contract only proves that a given path value is internally\nconsistent.",
+      "properties": {
+        "ancestor_node_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Ancestor Node Ids",
+          "type": "array"
+        },
+        "depth": {
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Depth",
+          "type": "integer"
+        },
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "path_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Path Revision",
+          "type": "string"
+        },
+        "root_node_id": {
+          "format": "uuid",
+          "title": "Root Node Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id",
+        "root_node_id",
+        "depth",
+        "path_revision"
+      ],
+      "title": "HierarchyPathRef",
+      "type": "object"
+    },
+    "NodeTypeRef": {
+      "additionalProperties": false,
+      "description": "Reference to one term of the versioned NodeType vocabulary.\n\nADR-CP-001 rule 4 fixes NodeType as a dynamic, versioned vocabulary rather\nthan a subclass hierarchy or a closed enumeration, so the term is carried as\na controlled code plus the vocabulary revision it was read from. The\nvocabulary contents and their versioning rules are an open decision owned by\nthe control-plane vocabulary package, and no authorization rule may be\nwritten against a specific value.",
+      "properties": {
+        "code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Code",
+          "type": "string"
+        },
+        "vocabulary_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Vocabulary Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "vocabulary_revision"
+      ],
+      "title": "NodeTypeRef",
+      "type": "object"
+    },
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:organizational-node:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One structural unit inside exactly one organization.\n\nLocal invariants proven here: a root node never carries a parent, a\nnon-root node always does, a node is never its own parent, and a parent\nalways belongs to the same organization. Re-parenting a root is therefore\nunrepresentable rather than merely forbidden by a later service.",
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "external_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "External Ref"
+    },
+    "is_root": {
+      "title": "Is Root",
+      "type": "boolean"
+    },
+    "node_id": {
+      "format": "uuid",
+      "title": "Node Id",
+      "type": "string"
+    },
+    "node_type": {
+      "$ref": "#/$defs/NodeTypeRef"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "parent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OrganizationalNodeRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "path": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HierarchyPathRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "non_active"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "status_changed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status Changed At"
+    }
+  },
+  "required": [
+    "organization_id",
+    "node_id",
+    "node_type",
+    "display_name",
+    "is_root",
+    "status",
+    "created_at"
+  ],
+  "title": "OrganizationalNode",
+  "type": "object"
+}

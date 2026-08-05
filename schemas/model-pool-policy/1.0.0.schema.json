@@ -1,0 +1,249 @@
+{
+  "$defs": {
+    "CredentialRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to a credential held outside the AI boundary.\n\nThis is the only credential representation any Control Plane contract may\nuse. It has no secret, key, token, or header field, and the reference is\nnever resolved, decoded, or logged by a contract. Resolution belongs to a\nCP-012 adapter against the deployment's secret store.",
+      "properties": {
+        "credential_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Credential Class",
+          "type": "string"
+        },
+        "credential_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Credential Ref",
+          "type": "string"
+        },
+        "rotated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rotated At"
+        }
+      },
+      "required": [
+        "credential_ref",
+        "credential_class"
+      ],
+      "title": "CredentialRef",
+      "type": "object"
+    },
+    "LogicalModelPool": {
+      "additionalProperties": false,
+      "description": "One logical pool: an ordered, provider-neutral preference list.\n\nCallers address the pool, never a provider. A pool whose deployments do not\nshare one compatibility class could silently change answer semantics on\nfallback, so it is rejected here rather than at runtime.",
+      "properties": {
+        "compatibility_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Compatibility Class",
+          "type": "string"
+        },
+        "deployments": {
+          "items": {
+            "$ref": "#/$defs/ModelDeploymentRef"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Deployments",
+          "type": "array"
+        },
+        "pool": {
+          "$ref": "#/$defs/LogicalModelPoolRef"
+        },
+        "probe_evidence": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ProbeEvidenceRef"
+          },
+          "maxItems": 16,
+          "title": "Probe Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pool",
+        "compatibility_class",
+        "deployments"
+      ],
+      "title": "LogicalModelPool",
+      "type": "object"
+    },
+    "LogicalModelPoolRef": {
+      "additionalProperties": false,
+      "description": "Reference to one logical, provider-neutral model pool.",
+      "properties": {
+        "catalog_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Catalog Revision",
+          "type": "string"
+        },
+        "pool_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Pool Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pool_code",
+        "catalog_revision"
+      ],
+      "title": "LogicalModelPoolRef",
+      "type": "object"
+    },
+    "ModelDeploymentRef": {
+      "additionalProperties": false,
+      "description": "Provider-neutral reference to one concrete model deployment.\n\nThe provider, model, and deployment identifiers are opaque strings owned by\nthe Control Plane. No provider SDK type, endpoint object, or vendor client\nappears here, and no field names a specific gateway implementation.",
+      "properties": {
+        "compatibility_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Compatibility Class",
+          "type": "string"
+        },
+        "credential": {
+          "$ref": "#/$defs/CredentialRef"
+        },
+        "deployment_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Deployment Ref",
+          "type": "string"
+        },
+        "model_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Model Ref",
+          "type": "string"
+        },
+        "preference_rank": {
+          "maximum": 64,
+          "minimum": 0,
+          "title": "Preference Rank",
+          "type": "integer"
+        },
+        "provider_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Ref",
+          "type": "string"
+        },
+        "request_timeout_ms": {
+          "maximum": 600000,
+          "minimum": 1,
+          "title": "Request Timeout Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "deployment_ref",
+        "provider_ref",
+        "model_ref",
+        "credential",
+        "compatibility_class",
+        "preference_rank",
+        "request_timeout_ms"
+      ],
+      "title": "ModelDeploymentRef",
+      "type": "object"
+    },
+    "ProbeEvidenceRef": {
+      "additionalProperties": false,
+      "description": "Reference to the recorded evidence of one deployment qualification probe.\n\nOnly the reference and its integrity digest are carried. Probe execution,\nscheduling, and interpretation are CP-008 obligations, so this contract can\nnever be mistaken for a live health signal.",
+      "properties": {
+        "deployment_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Deployment Ref",
+          "type": "string"
+        },
+        "evaluated_at": {
+          "format": "date-time",
+          "title": "Evaluated At",
+          "type": "string"
+        },
+        "evidence_digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Evidence Digest",
+          "type": "string"
+        },
+        "probe_id": {
+          "format": "uuid",
+          "title": "Probe Id",
+          "type": "string"
+        },
+        "probe_kind": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Probe Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "probe_id",
+        "deployment_ref",
+        "probe_kind",
+        "evaluated_at",
+        "evidence_digest"
+      ],
+      "title": "ProbeEvidenceRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:model-pool-policy:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Provider-neutral model policy artifact content: the logical pools and the\nrevision they were published as.\n\nThis is configuration data addressed by a `ConfigurationRelease` manifest\nentry. It performs no selection, no probing, and no invocation.",
+  "properties": {
+    "policy_revision": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Policy Revision",
+      "type": "string"
+    },
+    "pools": {
+      "items": {
+        "$ref": "#/$defs/LogicalModelPool"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Pools",
+      "type": "array"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "policy_revision",
+    "published_at",
+    "pools"
+  ],
+  "title": "ModelPoolPolicy",
+  "type": "object"
+}

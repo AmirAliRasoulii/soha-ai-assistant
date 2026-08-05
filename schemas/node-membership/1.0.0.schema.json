@@ -1,0 +1,120 @@
+{
+  "$defs": {
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    },
+    "ValidityWindow": {
+      "additionalProperties": false,
+      "description": "Half-open validity window for an assignment or membership record.\n\n`valid_until` is nullable and means open-ended, never \"already expired\".\nA window that closes at or before it opens is valid for no instant and is\nrejected instead of being silently accepted.",
+      "properties": {
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "valid_from"
+      ],
+      "title": "ValidityWindow",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:node-membership:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Binding of one principal to one organizational node.\n\nMembership is many-to-many by record multiplicity: a principal may hold\nseveral memberships, and a node may hold many members, while each record\nbinds exactly one principal to exactly one node. Membership is an\nauthorization input only. It grants no read access, no role, and no scope,\nand this contract cannot express any of those.",
+  "properties": {
+    "membership_id": {
+      "format": "uuid",
+      "title": "Membership Id",
+      "type": "string"
+    },
+    "membership_kind": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Membership Kind",
+      "type": "string"
+    },
+    "node": {
+      "$ref": "#/$defs/OrganizationalNodeRef"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "principal_id": {
+      "format": "uuid",
+      "title": "Principal Id",
+      "type": "string"
+    },
+    "recorded_at": {
+      "format": "date-time",
+      "title": "Recorded At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "non_active"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "validity": {
+      "$ref": "#/$defs/ValidityWindow"
+    }
+  },
+  "required": [
+    "membership_id",
+    "organization_id",
+    "principal_id",
+    "node",
+    "membership_kind",
+    "status",
+    "validity",
+    "recorded_at"
+  ],
+  "title": "NodeMembership",
+  "type": "object"
+}

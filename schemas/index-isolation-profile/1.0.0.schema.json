@@ -1,0 +1,213 @@
+{
+  "$id": "urn:ai-assistant:contracts:index-isolation-profile:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Trusted, versioned physical placement profile for one logical tenant.\n\nThe profile records where content is physically placed and why. It never\ngrants access: the mandatory trusted-metadata pre-filter is identical at\nevery tier (`T-2`, `T-6`), and this contract carries no permission, role,\ngroup, or membership field. Physical location is resolved from trusted\nconfiguration only (`T-4`), so nothing here may be populated from a request.\n\nPromotion above the shared tier must be evidence-based (`P-2`) and must not\nbe triggered by role, group, membership counts, or ordinary organizational\ndepth (`P-3`); those counts are structurally absent. An informal\nsensitivity label is not sufficient grounds (`P-4`), so a promotion states\na controlled reason code plus a reference to the recorded evidence.\n\nNo numeric threshold is defined in this package (`P-5`). Resolving routing,\nexecuting promotion or demotion, and emitting the audited before/after\ntopology (`T-5`) are CP-003, CP-006, and CP-009 obligations.",
+  "properties": {
+    "capacity_class": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Capacity Class"
+    },
+    "effective_at": {
+      "format": "date-time",
+      "title": "Effective At",
+      "type": "string"
+    },
+    "encryption_policy_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Encryption Policy Ref"
+    },
+    "index_configuration_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Index Configuration Ref"
+    },
+    "isolation_profile_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Isolation Profile Id",
+      "type": "string"
+    },
+    "logical_tenant_key": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Logical Tenant Key",
+      "type": "string"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "physical_isolation_tier": {
+      "enum": [
+        "shared_logical_partition",
+        "dedicated_shard",
+        "dedicated_collection",
+        "dedicated_deployment"
+      ],
+      "title": "Physical Isolation Tier",
+      "type": "string"
+    },
+    "previous_isolation_tier": {
+      "anyOf": [
+        {
+          "enum": [
+            "shared_logical_partition",
+            "dedicated_shard",
+            "dedicated_collection",
+            "dedicated_deployment"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Isolation Tier"
+    },
+    "previous_profile_revision": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Profile Revision"
+    },
+    "profile_revision": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Profile Revision",
+      "type": "string"
+    },
+    "promotion_evidence_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Promotion Evidence Ref"
+    },
+    "promotion_reason": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Promotion Reason"
+    },
+    "recorded_at": {
+      "format": "date-time",
+      "title": "Recorded At",
+      "type": "string"
+    },
+    "recorded_by_principal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recorded By Principal Id"
+    },
+    "residency_policy_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Residency Policy Ref"
+    },
+    "routing_profile_ref": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Routing Profile Ref"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "isolation_profile_id",
+    "profile_revision",
+    "organization_id",
+    "logical_tenant_key",
+    "physical_isolation_tier",
+    "effective_at",
+    "recorded_at"
+  ],
+  "title": "IndexIsolationProfile",
+  "type": "object"
+}

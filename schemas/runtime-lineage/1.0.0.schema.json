@@ -1,0 +1,680 @@
+{
+  "$defs": {
+    "AuthorizationScopeRef": {
+      "additionalProperties": false,
+      "description": "Explicit set of nodes an assignment or decision applies to.\n\nThe enumeration is exhaustive by construction. There is no descendant,\nsubtree, or wildcard flag, so no consumer of this contract can widen a\nscope by reading it; any breadth beyond these exact nodes must be produced\nby CP-002 policy evaluation and expressed as its own explicit scope value.",
+      "properties": {
+        "node_refs": {
+          "items": {
+            "$ref": "#/$defs/OrganizationalNodeRef"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Node Refs",
+          "type": "array"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_refs"
+      ],
+      "title": "AuthorizationScopeRef",
+      "type": "object"
+    },
+    "ConfigurationReleaseLineageRef": {
+      "additionalProperties": false,
+      "description": "Reference to the configuration release a run was executed under.",
+      "properties": {
+        "manifest_digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Manifest Digest",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "release_label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Release Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "release_label",
+        "manifest_digest"
+      ],
+      "title": "ConfigurationReleaseLineageRef",
+      "type": "object"
+    },
+    "ConsultedPolicyRevisionRef": {
+      "additionalProperties": false,
+      "description": "Reference to the exact policy revision a decision was evaluated against.\n\n`AuthorizationDecision 1.0.0` carries `policy_version` only, which cannot\nidentify which policy document and revision were actually consulted\n(DEF-106). This reference closes that gap without touching the published\ndecision contract.",
+      "properties": {
+        "policy_digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Policy Digest",
+          "type": "string"
+        },
+        "policy_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "policy_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Policy Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_id",
+        "policy_revision",
+        "policy_digest"
+      ],
+      "title": "ConsultedPolicyRevisionRef",
+      "type": "object"
+    },
+    "EmergencyActionRef": {
+      "additionalProperties": false,
+      "description": "Reference to one recorded configuration or emergency control action.\n\nOnly the controlled action code and its provenance are carried. Executing,\nauthorizing, or reversing an emergency action is a CP-009 obligation.",
+      "properties": {
+        "action_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Action Code",
+          "type": "string"
+        },
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "actor_principal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actor Principal Id"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "organization_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organization Id"
+        },
+        "reason_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Reason Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action_id",
+        "action_code",
+        "occurred_at",
+        "reason_code"
+      ],
+      "title": "EmergencyActionRef",
+      "type": "object"
+    },
+    "LegalHoldRef": {
+      "additionalProperties": false,
+      "description": "Reference to a legal hold and its state.\n\nA hold is released by recording a release instant, never by deleting the\nhold, so an active hold and a released hold are structurally distinct.",
+      "properties": {
+        "hold_id": {
+          "format": "uuid",
+          "title": "Hold Id",
+          "type": "string"
+        },
+        "placed_at": {
+          "format": "date-time",
+          "title": "Placed At",
+          "type": "string"
+        },
+        "reason_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "released_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Released At"
+        },
+        "state": {
+          "enum": [
+            "active",
+            "released"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hold_id",
+        "state",
+        "reason_code",
+        "placed_at"
+      ],
+      "title": "LegalHoldRef",
+      "type": "object"
+    },
+    "LineageSubjectRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to what a run was about.\n\nThe subject type is a controlled code and the identifier is opaque: neither\nis parsed, resolved, or used as an authorization input.",
+      "properties": {
+        "subject_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Subject Id",
+          "type": "string"
+        },
+        "subject_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Subject Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subject_type",
+        "subject_id"
+      ],
+      "title": "LineageSubjectRef",
+      "type": "object"
+    },
+    "LineageTimeScope": {
+      "additionalProperties": false,
+      "description": "The time scope a run answered for.\n\n`as_of` is the instant the run treated as now. The optional window states\nwhich business validity range was considered.",
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "valid_from": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid From"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "as_of"
+      ],
+      "title": "LineageTimeScope",
+      "type": "object"
+    },
+    "LogicalModelPoolRef": {
+      "additionalProperties": false,
+      "description": "Reference to one logical, provider-neutral model pool.",
+      "properties": {
+        "catalog_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Catalog Revision",
+          "type": "string"
+        },
+        "pool_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Pool Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pool_code",
+        "catalog_revision"
+      ],
+      "title": "LogicalModelPoolRef",
+      "type": "object"
+    },
+    "ModelInvocationAttemptRef": {
+      "additionalProperties": false,
+      "description": "One recorded attempt against one deployment of the addressed pool.",
+      "properties": {
+        "attempt_index": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Attempt Index",
+          "type": "integer"
+        },
+        "deployment_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Deployment Ref",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "completed",
+            "refused",
+            "timed_out",
+            "cancelled",
+            "failed"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason Code"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attempt_index",
+        "deployment_ref",
+        "started_at",
+        "outcome"
+      ],
+      "title": "ModelInvocationAttemptRef",
+      "type": "object"
+    },
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    },
+    "ProviderSelectionLineage": {
+      "additionalProperties": false,
+      "description": "Which pool was addressed, which deployment answered, and what was tried.\n\nThis is lineage, not behavior: it records selection and fallback that already\nhappened so an audit record can explain a run without naming a provider SDK.",
+      "properties": {
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/ModelInvocationAttemptRef"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Attempts",
+          "type": "array"
+        },
+        "pool": {
+          "$ref": "#/$defs/LogicalModelPoolRef"
+        },
+        "selected_deployment_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Deployment Ref"
+        }
+      },
+      "required": [
+        "pool",
+        "attempts"
+      ],
+      "title": "ProviderSelectionLineage",
+      "type": "object"
+    },
+    "RetentionPolicyRef": {
+      "additionalProperties": false,
+      "description": "Reference to the retention rule that governs one audit record.\n\nThe class and its revision are carried so a record can always be explained\nagainst the exact rule in force. Enforcement, expiry, and deletion are\nCP-009 and CP-012 obligations.",
+      "properties": {
+        "policy_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Policy Revision",
+          "type": "string"
+        },
+        "retention_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "retention_days": {
+          "anyOf": [
+            {
+              "maximum": 36500,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retention Days"
+        }
+      },
+      "required": [
+        "retention_class",
+        "policy_revision"
+      ],
+      "title": "RetentionPolicyRef",
+      "type": "object"
+    },
+    "RuntimeSnapshotLineageRef": {
+      "additionalProperties": false,
+      "description": "Reference to the runtime snapshot a run was executed under.\n\nThis is a reference only. `RuntimeSnapshot 1.0.0` keeps its published shape\nand is neither restated nor rewritten here.",
+      "properties": {
+        "content_digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "format": "uuid",
+          "title": "Snapshot Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "content_digest"
+      ],
+      "title": "RuntimeSnapshotLineageRef",
+      "type": "object"
+    },
+    "SourceRevisionLineageRef": {
+      "additionalProperties": false,
+      "description": "Reference to one exact source revision a run relied on.",
+      "properties": {
+        "revision_id": {
+          "format": "uuid",
+          "title": "Revision Id",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "revision_id"
+      ],
+      "title": "SourceRevisionLineageRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:runtime-lineage:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The complete lineage of one run (DEF-115).\n\nAll nine required elements are representable and none of them is optional by\naccident: organization, actor scope, subject, time scope, source version,\npolicy version, configuration release, runtime snapshot, and the run and\nrequest identifiers.\n\nThis contract is a fact record. It emits nothing, stores nothing, and makes\nno claim about whether durable completion has happened.",
+  "properties": {
+    "actor_principal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actor Principal Id"
+    },
+    "actor_scope": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuthorizationScopeRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "authorization_decision_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Authorization Decision Id"
+    },
+    "configuration_release": {
+      "$ref": "#/$defs/ConfigurationReleaseLineageRef"
+    },
+    "consulted_policy": {
+      "$ref": "#/$defs/ConsultedPolicyRevisionRef"
+    },
+    "emergency_action": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EmergencyActionRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "legal_hold": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LegalHoldRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "lineage_id": {
+      "format": "uuid",
+      "title": "Lineage Id",
+      "type": "string"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "answered",
+        "partial",
+        "clarification_required",
+        "abstained",
+        "policy_rejected",
+        "authorization_denied",
+        "failed",
+        "cancelled"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "provider_selection": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProviderSelectionLineage"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reason_codes": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "recorded_at": {
+      "format": "date-time",
+      "title": "Recorded At",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "retention": {
+      "$ref": "#/$defs/RetentionPolicyRef"
+    },
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "runtime_snapshot": {
+      "$ref": "#/$defs/RuntimeSnapshotLineageRef"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_revisions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SourceRevisionLineageRef"
+      },
+      "maxItems": 64,
+      "title": "Source Revisions",
+      "type": "array"
+    },
+    "subject": {
+      "$ref": "#/$defs/LineageSubjectRef"
+    },
+    "time_scope": {
+      "$ref": "#/$defs/LineageTimeScope"
+    }
+  },
+  "required": [
+    "lineage_id",
+    "organization_id",
+    "subject",
+    "time_scope",
+    "consulted_policy",
+    "configuration_release",
+    "runtime_snapshot",
+    "run_id",
+    "request_id",
+    "outcome",
+    "retention",
+    "recorded_at"
+  ],
+  "title": "RuntimeLineage",
+  "type": "object"
+}

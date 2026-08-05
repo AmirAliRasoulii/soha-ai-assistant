@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "SupersedesLink": {
+      "additionalProperties": false,
+      "description": "Revision replacement inside exactly one knowledge source.",
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "superseded_revision_id": {
+          "format": "uuid",
+          "title": "Superseded Revision Id",
+          "type": "string"
+        },
+        "superseding_revision_id": {
+          "format": "uuid",
+          "title": "Superseding Revision Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "superseding_revision_id",
+        "superseded_revision_id"
+      ],
+      "title": "SupersedesLink",
+      "type": "object"
+    },
+    "SupplementsLink": {
+      "additionalProperties": false,
+      "description": "Relationship between two separate knowledge sources.",
+      "properties": {
+        "from_source_id": {
+          "format": "uuid",
+          "title": "From Source Id",
+          "type": "string"
+        },
+        "to_source_id": {
+          "format": "uuid",
+          "title": "To Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from_source_id",
+        "to_source_id"
+      ],
+      "title": "SupplementsLink",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:source-relationship:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A declared relationship between source content (DEF-121).\n\nSupersession is always within one source and between two of its revisions.\nSupplementation is always across two distinct sources. The absence of a\nrelationship record means the sources are independent; it is never inferred.\nPartial amendment stays deferred and is unrepresentable here.",
+  "properties": {
+    "declared_at": {
+      "format": "date-time",
+      "title": "Declared At",
+      "type": "string"
+    },
+    "declared_by_principal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Declared By Principal Id"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "reason_code": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "relationship_id": {
+      "format": "uuid",
+      "title": "Relationship Id",
+      "type": "string"
+    },
+    "relationship_type": {
+      "enum": [
+        "supersedes",
+        "supplements"
+      ],
+      "title": "Relationship Type",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "supersedes": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SupersedesLink"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "supplements": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SupplementsLink"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "relationship_id",
+    "organization_id",
+    "relationship_type",
+    "declared_at",
+    "reason_code"
+  ],
+  "title": "SourceRelationship",
+  "type": "object"
+}

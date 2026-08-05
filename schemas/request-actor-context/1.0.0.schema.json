@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "AnonymousGuest": {
+      "additionalProperties": false,
+      "description": "First-class typed Guest actor (DEF-108).\n\nA Guest is an accepted architecture actor, not a fallback: it is only ever\nconstructed deliberately for an unauthenticated public surface. It carries\nno principal identifier, no role, no membership, and no scope, so nothing\ndownstream can mistake a Guest for a narrowed authenticated principal.",
+      "properties": {
+        "established_at": {
+          "format": "date-time",
+          "title": "Established At",
+          "type": "string"
+        },
+        "guest_session_id": {
+          "format": "uuid",
+          "title": "Guest Session Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "visibility_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Visibility Class",
+          "type": "string"
+        }
+      },
+      "required": [
+        "guest_session_id",
+        "organization_id",
+        "established_at",
+        "visibility_class"
+      ],
+      "title": "AnonymousGuest",
+      "type": "object"
+    },
+    "AuthenticatedPrincipalRef": {
+      "additionalProperties": false,
+      "description": "Reference to a principal whose identity was already established.\n\nThe trusted identity facts themselves live in `SecurityPrincipalContext\n1.0.0`; this reference only binds a request to that context and to the\norganization the request is made in.",
+      "properties": {
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "principal_id": {
+          "format": "uuid",
+          "title": "Principal Id",
+          "type": "string"
+        },
+        "security_context_id": {
+          "format": "uuid",
+          "title": "Security Context Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "principal_id",
+        "security_context_id",
+        "organization_id"
+      ],
+      "title": "AuthenticatedPrincipalRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:request-actor-context:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The actor a request is evaluated for: exactly one authenticated principal\nor exactly one Guest.\n\nThe mutually exclusive shape is the invariant: a payload that carries both\nan authenticated principal and a Guest, or neither, is rejected. Combined\nwith the closed `ActorKind`, this makes \"authentication failed, continue as\nGuest\" structurally impossible.",
+  "properties": {
+    "actor_kind": {
+      "enum": [
+        "authenticated_principal",
+        "anonymous_guest"
+      ],
+      "title": "Actor Kind",
+      "type": "string"
+    },
+    "authenticated_principal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuthenticatedPrincipalRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "guest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnonymousGuest"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "actor_kind"
+  ],
+  "title": "RequestActorContext",
+  "type": "object"
+}

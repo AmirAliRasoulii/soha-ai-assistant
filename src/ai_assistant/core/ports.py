@@ -1,5 +1,6 @@
 """Provider-neutral runtime ports for the private AI Core."""
 
+from collections.abc import AsyncIterator
 from typing import Protocol, runtime_checkable
 
 from ai_assistant.contracts import (
@@ -7,6 +8,9 @@ from ai_assistant.contracts import (
     AuthorizationDecision,
     CapabilityName,
     Evidence,
+    ModelInvocationRequest,
+    ModelInvocationResult,
+    ModelStreamChunk,
     StepResult,
 )
 from ai_assistant.core.types import (
@@ -53,6 +57,27 @@ class IdempotencyStorePort(Protocol):
     async def complete(self, lease: IdempotencyLease, outcome: TerminalOutcome) -> None: ...
 
     async def abandon(self, lease: IdempotencyLease) -> None: ...
+
+
+@runtime_checkable
+class ModelGatewayPort(Protocol):
+    """Provider-neutral model invocation boundary (DEF-037).
+
+    Core depends on this protocol and on the bounded request, result, and chunk
+    contracts only. No provider, gateway product, SDK type, endpoint, or
+    credential ever crosses it: a provider adapter implements this protocol in
+    CP-012, and runtime invocation behavior such as retry and budget enforcement
+    belongs to AI-008.
+
+    Deadline and cancellation are contractual, not incidental: every request
+    carries an absolute deadline, cancellation is delivered through ordinary
+    task cancellation, and both surface as distinct terminal outcomes in the
+    result rather than as an implementation-specific exception.
+    """
+
+    async def invoke(self, request: ModelInvocationRequest) -> ModelInvocationResult: ...
+
+    def stream(self, request: ModelInvocationRequest) -> AsyncIterator[ModelStreamChunk]: ...
 
 
 @runtime_checkable

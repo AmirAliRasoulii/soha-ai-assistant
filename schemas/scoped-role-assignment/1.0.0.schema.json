@@ -1,0 +1,180 @@
+{
+  "$defs": {
+    "AuthorizationScopeRef": {
+      "additionalProperties": false,
+      "description": "Explicit set of nodes an assignment or decision applies to.\n\nThe enumeration is exhaustive by construction. There is no descendant,\nsubtree, or wildcard flag, so no consumer of this contract can widen a\nscope by reading it; any breadth beyond these exact nodes must be produced\nby CP-002 policy evaluation and expressed as its own explicit scope value.",
+      "properties": {
+        "node_refs": {
+          "items": {
+            "$ref": "#/$defs/OrganizationalNodeRef"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Node Refs",
+          "type": "array"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_refs"
+      ],
+      "title": "AuthorizationScopeRef",
+      "type": "object"
+    },
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    },
+    "RoleRef": {
+      "additionalProperties": false,
+      "description": "Reference to one role term of the versioned role catalog.\n\nThe role code is a controlled label. It never carries or implies a\npermission: resolving a role to permissions requires the catalog revision\nand is a CP-002 evaluation step.",
+      "properties": {
+        "catalog_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Catalog Revision",
+          "type": "string"
+        },
+        "role_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Role Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role_code",
+        "catalog_revision"
+      ],
+      "title": "RoleRef",
+      "type": "object"
+    },
+    "ValidityWindow": {
+      "additionalProperties": false,
+      "description": "Half-open validity window for an assignment or membership record.\n\n`valid_until` is nullable and means open-ended, never \"already expired\".\nA window that closes at or before it opens is valid for no instant and is\nrejected instead of being silently accepted.",
+      "properties": {
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "valid_from"
+      ],
+      "title": "ValidityWindow",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:scoped-role-assignment:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Assignment of one role to one principal over one explicit scope.\n\nThe assignment states who holds which role over exactly which nodes and for\nwhich window. It never states what that role may do: permission resolution,\nconflict handling, and effective access are CP-002 evaluation concerns.",
+  "properties": {
+    "assigned_at": {
+      "format": "date-time",
+      "title": "Assigned At",
+      "type": "string"
+    },
+    "assigned_by_principal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assigned By Principal Id"
+    },
+    "assignment_id": {
+      "format": "uuid",
+      "title": "Assignment Id",
+      "type": "string"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "principal_id": {
+      "format": "uuid",
+      "title": "Principal Id",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/RoleRef"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "$ref": "#/$defs/AuthorizationScopeRef"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "non_active"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "validity": {
+      "$ref": "#/$defs/ValidityWindow"
+    }
+  },
+  "required": [
+    "assignment_id",
+    "organization_id",
+    "principal_id",
+    "role",
+    "scope",
+    "status",
+    "validity",
+    "assigned_at"
+  ],
+  "title": "ScopedRoleAssignment",
+  "type": "object"
+}

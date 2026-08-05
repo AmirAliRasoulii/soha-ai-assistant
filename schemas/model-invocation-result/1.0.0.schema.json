@@ -1,0 +1,259 @@
+{
+  "$defs": {
+    "LogicalModelPoolRef": {
+      "additionalProperties": false,
+      "description": "Reference to one logical, provider-neutral model pool.",
+      "properties": {
+        "catalog_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Catalog Revision",
+          "type": "string"
+        },
+        "pool_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Pool Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pool_code",
+        "catalog_revision"
+      ],
+      "title": "LogicalModelPoolRef",
+      "type": "object"
+    },
+    "ModelInvocationAttemptRef": {
+      "additionalProperties": false,
+      "description": "One recorded attempt against one deployment of the addressed pool.",
+      "properties": {
+        "attempt_index": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Attempt Index",
+          "type": "integer"
+        },
+        "deployment_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Deployment Ref",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "completed",
+            "refused",
+            "timed_out",
+            "cancelled",
+            "failed"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason Code"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attempt_index",
+        "deployment_ref",
+        "started_at",
+        "outcome"
+      ],
+      "title": "ModelInvocationAttemptRef",
+      "type": "object"
+    },
+    "ModelInvocationUsage": {
+      "additionalProperties": false,
+      "description": "Bounded token accounting of one invocation.",
+      "properties": {
+        "input_tokens": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Input Tokens",
+          "type": "integer"
+        },
+        "output_tokens": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Output Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "input_tokens",
+        "output_tokens"
+      ],
+      "title": "ModelInvocationUsage",
+      "type": "object"
+    },
+    "ProviderSelectionLineage": {
+      "additionalProperties": false,
+      "description": "Which pool was addressed, which deployment answered, and what was tried.\n\nThis is lineage, not behavior: it records selection and fallback that already\nhappened so an audit record can explain a run without naming a provider SDK.",
+      "properties": {
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/ModelInvocationAttemptRef"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Attempts",
+          "type": "array"
+        },
+        "pool": {
+          "$ref": "#/$defs/LogicalModelPoolRef"
+        },
+        "selected_deployment_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Deployment Ref"
+        }
+      },
+      "required": [
+        "pool",
+        "attempts"
+      ],
+      "title": "ProviderSelectionLineage",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:model-invocation-result:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Terminal, provider-neutral result of one invocation.\n\nA refusal, a timeout, and a cancellation are distinct outcomes with no\ncontent, so no caller can read partial or absent output as an answer. No\nprovider payload, header, or error object crosses this boundary: only\ncontrolled codes and bounded text.",
+  "properties": {
+    "completed_at": {
+      "format": "date-time",
+      "title": "Completed At",
+      "type": "string"
+    },
+    "content": {
+      "anyOf": [
+        {
+          "maxLength": 32768,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Content"
+    },
+    "finish_reason": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Finish Reason"
+    },
+    "internal_detail_ref": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Internal Detail Ref"
+    },
+    "invocation_id": {
+      "format": "uuid",
+      "title": "Invocation Id",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "completed",
+        "refused",
+        "timed_out",
+        "cancelled",
+        "failed"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "reason_code": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason Code"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "selection": {
+      "$ref": "#/$defs/ProviderSelectionLineage"
+    },
+    "usage": {
+      "$ref": "#/$defs/ModelInvocationUsage"
+    }
+  },
+  "required": [
+    "invocation_id",
+    "request_id",
+    "outcome",
+    "usage",
+    "selection",
+    "completed_at"
+  ],
+  "title": "ModelInvocationResult",
+  "type": "object"
+}

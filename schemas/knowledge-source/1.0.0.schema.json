@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:knowledge-source:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The stable registry record of one knowledge source.\n\nThe source is the durable identity; its content lives in revisions. At most\none revision can be active, which is expressible only as a single optional\npointer, and a non-active source can carry no active revision at all.",
+  "properties": {
+    "active_revision_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Active Revision Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "owner_node": {
+      "$ref": "#/$defs/OrganizationalNodeRef"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_id": {
+      "format": "uuid",
+      "title": "Source Id",
+      "type": "string"
+    },
+    "source_type": {
+      "enum": [
+        "uploaded_document",
+        "official_url"
+      ],
+      "title": "Source Type",
+      "type": "string"
+    },
+    "stable_key": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Stable Key",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "archived",
+        "revoked"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_id",
+    "organization_id",
+    "owner_node",
+    "source_type",
+    "stable_key",
+    "status",
+    "created_at"
+  ],
+  "title": "KnowledgeSource",
+  "type": "object"
+}

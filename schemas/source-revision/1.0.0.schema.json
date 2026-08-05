@@ -1,0 +1,617 @@
+{
+  "$defs": {
+    "CitationSafePublishedSourceMetadata": {
+      "additionalProperties": false,
+      "description": "The minimum published facts needed to cite and explain a source.\n\nThis is the only metadata class a reader or a Guest may ever receive. It\ncarries no owner, no review state, no audit reason, no internal status, and\nno raw locator for uploaded content.",
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/SourceAuthorityRef"
+        },
+        "public_locator": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Public Locator"
+        },
+        "publisher_display_name": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publisher Display Name"
+        },
+        "source_type": {
+          "enum": [
+            "uploaded_document",
+            "official_url"
+          ],
+          "title": "Source Type",
+          "type": "string"
+        },
+        "temporal": {
+          "$ref": "#/$defs/TrustedSourceTemporalMetadata"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "source_type",
+        "authority",
+        "temporal"
+      ],
+      "title": "CitationSafePublishedSourceMetadata",
+      "type": "object"
+    },
+    "LifecycleAuditMetadata": {
+      "additionalProperties": false,
+      "description": "Audit-only record of the last lifecycle transition of a revision.\n\nReason text is never carried inline: only a controlled reason code and an\nopaque reference to the audit record.",
+      "properties": {
+        "audit_event_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Audit Event Id"
+        },
+        "reason_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "transitioned_at": {
+          "format": "date-time",
+          "title": "Transitioned At",
+          "type": "string"
+        },
+        "transitioned_by_principal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transitioned By Principal Id"
+        }
+      },
+      "required": [
+        "reason_code",
+        "transitioned_at"
+      ],
+      "title": "LifecycleAuditMetadata",
+      "type": "object"
+    },
+    "ManagementSourceMetadata": {
+      "additionalProperties": false,
+      "description": "Administrative metadata for operators of one source revision.\n\nOwnership is recorded here for management and accountability. Ownership\ngrants no read access to anyone, and this contract states no permission.",
+      "properties": {
+        "owner_node": {
+          "$ref": "#/$defs/OrganizationalNodeRef"
+        },
+        "owner_principal_id": {
+          "format": "uuid",
+          "title": "Owner Principal Id",
+          "type": "string"
+        },
+        "review_state": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Review State",
+          "type": "string"
+        },
+        "reviewed_by_principal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewed By Principal Id"
+        },
+        "submitted_by_principal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Submitted By Principal Id"
+        },
+        "uploaded_at": {
+          "format": "date-time",
+          "title": "Uploaded At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "owner_node",
+        "owner_principal_id",
+        "uploaded_at",
+        "review_state"
+      ],
+      "title": "ManagementSourceMetadata",
+      "type": "object"
+    },
+    "MandatoryIsolationMetadata": {
+      "additionalProperties": false,
+      "description": "The mandatory, non-bypassable isolation subset of index metadata.\n\nADR-CP-003 requires every retrieval to be pre-filtered by trusted isolation\nmetadata. This is deliberately the minimum subset with a distinct name: it\nis not the complete chunk and index metadata contract, which remains a\nCP-006 obligation (DEF-119).",
+      "properties": {
+        "index_namespace": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Index Namespace",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "owner_node": {
+          "$ref": "#/$defs/OrganizationalNodeRef"
+        },
+        "revision_id": {
+          "format": "uuid",
+          "title": "Revision Id",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "visibility_policy": {
+          "$ref": "#/$defs/VisibilityPolicyRevisionRef"
+        }
+      },
+      "required": [
+        "organization_id",
+        "owner_node",
+        "visibility_policy",
+        "source_id",
+        "revision_id",
+        "index_namespace"
+      ],
+      "title": "MandatoryIsolationMetadata",
+      "type": "object"
+    },
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    },
+    "ProposedSourceTemporalMetadata": {
+      "additionalProperties": false,
+      "description": "Temporal values proposed by a contributor or client.\n\nUntrusted by construction: nothing downstream may read these fields as\neffective business time. Approval and trusted recording are CP-005 work.",
+      "properties": {
+        "proposed_at": {
+          "format": "date-time",
+          "title": "Proposed At",
+          "type": "string"
+        },
+        "proposed_by_principal_id": {
+          "format": "uuid",
+          "title": "Proposed By Principal Id",
+          "type": "string"
+        },
+        "proposed_effective_from": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Effective From"
+        },
+        "proposed_published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Published At"
+        },
+        "proposed_valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Valid Until"
+        }
+      },
+      "required": [
+        "proposed_by_principal_id",
+        "proposed_at"
+      ],
+      "title": "ProposedSourceTemporalMetadata",
+      "type": "object"
+    },
+    "RawSourceContentRef": {
+      "additionalProperties": false,
+      "description": "Reference to the stored raw content of one revision.\n\nThe reference is opaque and is never resolved or fetched by a contract. No\nobject-storage, bucket, or provider concept appears here.",
+      "properties": {
+        "byte_size": {
+          "maximum": 5368709120,
+          "minimum": 1,
+          "title": "Byte Size",
+          "type": "integer"
+        },
+        "content_digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "content_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Content Ref",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[a-z0-9]+/[a-z0-9][a-z0-9.+-]*$",
+          "title": "Media Type",
+          "type": "string"
+        },
+        "raw_locator": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Locator"
+        }
+      },
+      "required": [
+        "content_ref",
+        "content_digest",
+        "media_type",
+        "byte_size"
+      ],
+      "title": "RawSourceContentRef",
+      "type": "object"
+    },
+    "SourceAuthorityRef": {
+      "additionalProperties": false,
+      "description": "Trusted authority binding of one source revision (DEF-103).\n\nThe authority class, the issuer, and the assignment policy are separate\ncontrolled references read from a versioned catalog. An authority is never\nderived from a display name, a filename, a domain, or contributor-supplied\ntext.",
+      "properties": {
+        "authority_assignment_policy_ref": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority Assignment Policy Ref",
+          "type": "string"
+        },
+        "authority_class_ref": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Authority Class Ref",
+          "type": "string"
+        },
+        "catalog_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Catalog Revision",
+          "type": "string"
+        },
+        "issuer_ref": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Issuer Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "authority_class_ref",
+        "issuer_ref",
+        "authority_assignment_policy_ref",
+        "catalog_revision"
+      ],
+      "title": "SourceAuthorityRef",
+      "type": "object"
+    },
+    "TrustedSourceTemporalMetadata": {
+      "additionalProperties": false,
+      "description": "Trusted business time of one source revision.\n\n`valid_until` is nullable and means open-ended validity, never expiry.\n`published_at` is a business publication fact and is unrelated to the\ninstant a file was uploaded, which lives in management metadata only.",
+      "properties": {
+        "effective_from": {
+          "format": "date-time",
+          "title": "Effective From",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "recorded_by_principal_id": {
+          "format": "uuid",
+          "title": "Recorded By Principal Id",
+          "type": "string"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "effective_from",
+        "recorded_by_principal_id",
+        "recorded_at"
+      ],
+      "title": "TrustedSourceTemporalMetadata",
+      "type": "object"
+    },
+    "VisibilityPolicyRevisionRef": {
+      "additionalProperties": false,
+      "description": "Reference to one revision of a per-source visibility policy definition.\n\nThis is the per-source visibility policy, never the global `security_policy`\nconfiguration artifact; DEF-116 recorded that ambiguity explicitly.",
+      "properties": {
+        "policy_digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Policy Digest",
+          "type": "string"
+        },
+        "policy_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Policy Revision",
+          "type": "string"
+        },
+        "visibility_policy_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Visibility Policy Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "visibility_policy_id",
+        "policy_revision",
+        "policy_digest"
+      ],
+      "title": "VisibilityPolicyRevisionRef",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:source-revision:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One immutable revision of one knowledge source.\n\nA revision is never edited in place: a lifecycle change is a new record, and\nsupersession must name the replacing revision. The four metadata classes are\ncarried as separate, separately permissionable values.",
+  "properties": {
+    "citation_safe": {
+      "$ref": "#/$defs/CitationSafePublishedSourceMetadata"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "isolation": {
+      "$ref": "#/$defs/MandatoryIsolationMetadata"
+    },
+    "lifecycle_audit": {
+      "$ref": "#/$defs/LifecycleAuditMetadata"
+    },
+    "management": {
+      "$ref": "#/$defs/ManagementSourceMetadata"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "proposed_temporal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProposedSourceTemporalMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "raw_content": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RawSourceContentRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "revision_id": {
+      "format": "uuid",
+      "title": "Revision Id",
+      "type": "string"
+    },
+    "revision_number": {
+      "maximum": 10000,
+      "minimum": 1,
+      "title": "Revision Number",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_id": {
+      "format": "uuid",
+      "title": "Source Id",
+      "type": "string"
+    },
+    "source_type": {
+      "enum": [
+        "uploaded_document",
+        "official_url"
+      ],
+      "title": "Source Type",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "approved",
+        "rejected",
+        "active",
+        "superseded",
+        "revoked",
+        "archived"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "superseded_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Superseded At"
+    },
+    "superseded_by_revision_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Superseded By Revision Id"
+    }
+  },
+  "required": [
+    "revision_id",
+    "source_id",
+    "organization_id",
+    "revision_number",
+    "source_type",
+    "status",
+    "created_at",
+    "citation_safe",
+    "management",
+    "lifecycle_audit",
+    "isolation"
+  ],
+  "title": "SourceRevision",
+  "type": "object"
+}

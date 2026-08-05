@@ -1,0 +1,259 @@
+{
+  "$defs": {
+    "OrganizationalNodeRef": {
+      "additionalProperties": false,
+      "description": "Opaque reference to exactly one node inside exactly one organization.\n\nThe organization identifier travels with every node reference so that a\ncross-organization relationship is structurally detectable at the contract\nboundary instead of depending on a later lookup.",
+      "properties": {
+        "node_id": {
+          "format": "uuid",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "format": "uuid",
+          "title": "Organization Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "node_id"
+      ],
+      "title": "OrganizationalNodeRef",
+      "type": "object"
+    },
+    "VisibilityAllowClause": {
+      "additionalProperties": false,
+      "description": "One conjunctive allow clause: every predicate inside it must match.\n\nA clause matches only if all of its predicates match (`C-1`). A clause\ncannot repeat a primitive kind, because two conjunctive occurrences of the\nsame kind either duplicate or contradict each other and the resolution\nwould be implicit.",
+      "properties": {
+        "predicates": {
+          "items": {
+            "$ref": "#/$defs/VisibilityPredicate"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Predicates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "predicates"
+      ],
+      "title": "VisibilityAllowClause",
+      "type": "object"
+    },
+    "VisibilityPredicate": {
+      "additionalProperties": false,
+      "description": "One Layer 1 primitive occurrence inside one allow clause.\n\nExactly one operand family is populated, chosen by `kind`. The pairing is\nvalidated so that a predicate can never be half-specified or carry operands\nthe platform would silently ignore.",
+      "properties": {
+        "classification_code": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification Code"
+        },
+        "kind": {
+          "enum": [
+            "organization_member",
+            "exact_node_member",
+            "subtree_member",
+            "scoped_role",
+            "trusted_group",
+            "explicit_principal",
+            "classification_condition"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "node_refs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/OrganizationalNodeRef"
+          },
+          "maxItems": 32,
+          "title": "Node Refs",
+          "type": "array"
+        },
+        "principal_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Principal Ids",
+          "type": "array"
+        },
+        "role_code": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role Code"
+        },
+        "trusted_group_code": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trusted Group Code"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "VisibilityPredicate",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:visibility-policy-definition:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One named, versioned, approved visibility policy definition.\n\nA definition allows a read only if at least one of its clauses matches\n(`C-1`). It is composed solely of Layer 1 primitives (`V-1`, `V-3`) and\ncarries no executable predicate, no expression fragment, and no\nadministrator-authored deny language (`C-3`). Restriction is expressed by\nwriting narrower clauses.\n\nThis is the per-source visibility policy, never the global `security_policy`\nconfiguration artifact (`ADR-CP-002` `O-8`, audit finding G-016). A source\nrevision binds an exact immutable revision of this definition, not a policy\nidentity that follows whichever revision is active (`V-4`, `V-5`).\n\nDeciding whether a definition allows a given principal is CP-002 work; an\nunresolvable reference means deny (`V-7`) and this contract therefore has no\npermissive default of any kind.",
+  "properties": {
+    "approved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approved At"
+    },
+    "approved_by_principal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approved By Principal Id"
+    },
+    "clauses": {
+      "items": {
+        "$ref": "#/$defs/VisibilityAllowClause"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "title": "Clauses",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "organization_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Organization Id"
+    },
+    "policy_digest": {
+      "maxLength": 71,
+      "minLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Policy Digest",
+      "type": "string"
+    },
+    "policy_revision": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Policy Revision",
+      "type": "string"
+    },
+    "previous_policy_revision": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Policy Revision"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "approved",
+        "active",
+        "retired"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "visibility_policy_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Visibility Policy Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "visibility_policy_id",
+    "policy_revision",
+    "policy_digest",
+    "display_name",
+    "status",
+    "clauses",
+    "created_at"
+  ],
+  "title": "VisibilityPolicyDefinition",
+  "type": "object"
+}

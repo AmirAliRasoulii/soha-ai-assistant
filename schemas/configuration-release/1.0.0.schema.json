@@ -1,0 +1,177 @@
+{
+  "$defs": {
+    "ConfigurationArtifactRevisionRef": {
+      "additionalProperties": false,
+      "description": "Immutable reference to one revision of one configuration artifact.\n\nThe digest is what downstream trust checks compare. This contract validates\nits syntax only: resolving, fetching, or verifying content is CP-003 and\nCP-004 work.",
+      "properties": {
+        "artifact_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        },
+        "namespace": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace",
+        "artifact_id",
+        "revision",
+        "digest"
+      ],
+      "title": "ConfigurationArtifactRevisionRef",
+      "type": "object"
+    },
+    "ReleaseManifestEntry": {
+      "additionalProperties": false,
+      "description": "One artifact revision made effective by a release, with its owner.\n\nOwnership is recorded because ADR-CP-004 makes precedence and change\nauthority explicit per artifact family: a frontend-owned, provider-neutral\nartifact and a platform-owned artifact are never interchangeable.",
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/ConfigurationArtifactRevisionRef"
+        },
+        "operator_changeable": {
+          "title": "Operator Changeable",
+          "type": "boolean"
+        },
+        "owner_role": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Owner Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact",
+        "owner_role",
+        "operator_changeable"
+      ],
+      "title": "ReleaseManifestEntry",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:configuration-release:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Immutable, complete set of artifact revisions that may be made effective.\n\nA release is a candidate, not a state of the system: it never says that it\nis the one in use. The active pointer, atomic activation, and rollback\nstorage are CP-003 obligations, and this contract deliberately cannot\nexpress them.",
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "manifest": {
+      "items": {
+        "$ref": "#/$defs/ReleaseManifestEntry"
+      },
+      "maxItems": 128,
+      "minItems": 1,
+      "title": "Manifest",
+      "type": "array"
+    },
+    "manifest_digest": {
+      "maxLength": 71,
+      "minLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Manifest Digest",
+      "type": "string"
+    },
+    "organization_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Organization Id"
+    },
+    "previous_release_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Release Id"
+    },
+    "release_id": {
+      "format": "uuid",
+      "title": "Release Id",
+      "type": "string"
+    },
+    "release_label": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Release Label",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "validated",
+        "rejected",
+        "active",
+        "superseded",
+        "rolled_back",
+        "archived"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "validated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Validated At"
+    }
+  },
+  "required": [
+    "release_id",
+    "release_label",
+    "status",
+    "manifest",
+    "manifest_digest",
+    "created_at"
+  ],
+  "title": "ConfigurationRelease",
+  "type": "object"
+}

@@ -1,0 +1,221 @@
+{
+  "$defs": {
+    "ConfigurationArtifactRevisionRef": {
+      "additionalProperties": false,
+      "description": "Immutable reference to one revision of one configuration artifact.\n\nThe digest is what downstream trust checks compare. This contract validates\nits syntax only: resolving, fetching, or verifying content is CP-003 and\nCP-004 work.",
+      "properties": {
+        "artifact_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "digest": {
+          "maxLength": 71,
+          "minLength": 71,
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        },
+        "namespace": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace",
+        "artifact_id",
+        "revision",
+        "digest"
+      ],
+      "title": "ConfigurationArtifactRevisionRef",
+      "type": "object"
+    },
+    "LogicalModelPoolRef": {
+      "additionalProperties": false,
+      "description": "Reference to one logical, provider-neutral model pool.",
+      "properties": {
+        "catalog_revision": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Catalog Revision",
+          "type": "string"
+        },
+        "pool_code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9._:-]*$",
+          "title": "Pool Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pool_code",
+        "catalog_revision"
+      ],
+      "title": "LogicalModelPoolRef",
+      "type": "object"
+    },
+    "ModelMessage": {
+      "additionalProperties": false,
+      "description": "One provider-neutral message of a bounded invocation.\n\nThe role vocabulary is closed and provider-independent. Content is trusted,\nalready-assembled text: this contract carries no tool payload, no raw\ndocument, and no untyped extension bag.",
+      "properties": {
+        "content": {
+          "maxLength": 32768,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "ModelMessage",
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-assistant:contracts:model-invocation-request:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One bounded, deadline-aware model invocation addressed to a logical pool.",
+  "properties": {
+    "deadline_at": {
+      "format": "date-time",
+      "title": "Deadline At",
+      "type": "string"
+    },
+    "invocation_id": {
+      "format": "uuid",
+      "title": "Invocation Id",
+      "type": "string"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "max_output_tokens": {
+      "maximum": 32768,
+      "minimum": 1,
+      "title": "Max Output Tokens",
+      "type": "integer"
+    },
+    "messages": {
+      "items": {
+        "$ref": "#/$defs/ModelMessage"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Messages",
+      "type": "array"
+    },
+    "pool": {
+      "$ref": "#/$defs/LogicalModelPoolRef"
+    },
+    "purpose": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "title": "Purpose",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "runtime_snapshot_id": {
+      "format": "uuid",
+      "title": "Runtime Snapshot Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "stream_requested": {
+      "default": false,
+      "title": "Stream Requested",
+      "type": "boolean"
+    },
+    "structured_output_schema": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ConfigurationArtifactRevisionRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "temperature": {
+      "anyOf": [
+        {
+          "maximum": 2.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Temperature"
+    },
+    "top_p": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Top P"
+    }
+  },
+  "required": [
+    "invocation_id",
+    "request_id",
+    "run_id",
+    "pool",
+    "purpose",
+    "messages",
+    "max_output_tokens",
+    "issued_at",
+    "deadline_at",
+    "runtime_snapshot_id"
+  ],
+  "title": "ModelInvocationRequest",
+  "type": "object"
+}
